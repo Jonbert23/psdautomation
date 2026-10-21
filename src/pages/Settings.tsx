@@ -1,14 +1,17 @@
 import { useEffect, useState } from "react";
 import type { AppSettings, Category } from "@shared/types";
 import { api } from "../lib/api";
+import { useLicense } from "../lib/LicenseContext";
 
 export function SettingsPage() {
+  const { status, logout, refresh } = useLicense();
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [newCategory, setNewCategory] = useState("");
   const [detected, setDetected] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
 
   async function load() {
     const [s, c, ps] = await Promise.all([
@@ -62,6 +65,19 @@ export function SettingsPage() {
     }
   }
 
+  async function refreshLicense() {
+    setError("");
+    setRefreshing(true);
+    try {
+      const next = await refresh();
+      setMessage(next.usable ? "License refreshed." : next.message);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setRefreshing(false);
+    }
+  }
+
   if (!settings) return <p className="muted">Loading settings…</p>;
 
   return (
@@ -69,6 +85,23 @@ export function SettingsPage() {
       {error && <div className="error-banner">{error}</div>}
       {message && <div className="ok-banner">{message}</div>}
       <section className="card">
+        <h3>Account</h3>
+        <div className="card-body">
+          <p className="muted">
+            {status?.email || "Signed in"} · {status?.planName || "License"} · expires{" "}
+            {status?.expiresAt ? new Date(status.expiresAt).toLocaleDateString() : "—"}.
+          </p>
+          <div className="row-actions">
+            <button className="btn" onClick={() => void refreshLicense()} disabled={refreshing}>
+              {refreshing ? "Refreshing…" : "Refresh license"}
+            </button>
+            <button className="btn" onClick={() => void logout()}>
+              Sign out
+            </button>
+          </div>
+        </div>
+      </section>
+      <section className="card" style={{ marginTop: 8 }}>
         <h3>Photoshop</h3>
         <div className="card-body form-grid">
           <div className="field span-2">
@@ -120,7 +153,10 @@ export function SettingsPage() {
       <section className="card" style={{ marginTop: 8 }}>
         <h3>Backup and restore</h3>
         <div className="card-body">
-          <p className="muted">The workspace file includes profiles, orders, jobs, and settings (schemaVersion 1).</p>
+          <p className="muted">
+            The workspace file includes profiles, orders, jobs, and Photoshop settings. It does not include your
+            license or sign-in token.
+          </p>
           <div className="row-actions">
             <button className="btn" onClick={backup}>
               Backup workspace

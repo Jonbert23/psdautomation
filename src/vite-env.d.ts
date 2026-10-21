@@ -2,6 +2,8 @@
 
 import type { DashboardStats, ActivityEvent, Category, GarmentProfile, ProductionOrder, AutomationJob, AppSettings } from "@shared/types";
 import type { TemplateSkip } from "@shared/templateSpec";
+import type { AuthStatus, UserProfile } from "@shared/licenseGrant";
+import type { BillingSnapshot, Plan } from "@shared/plans";
 
 export interface DashboardPayload extends DashboardStats {
   activity: ActivityEvent[];
@@ -43,6 +45,23 @@ export interface DesktopApi {
     list: () => Promise<AutomationJob[]>;
     get: (id: string) => Promise<AutomationJob | null>;
     runOrder: (orderId: string) => Promise<AutomationJob>;
+  };
+  auth: {
+    status: () => Promise<AuthStatus>;
+    login: (email: string, password: string) => Promise<AuthStatus>;
+    startWebLogin: () => Promise<AuthStatus>;
+    logout: () => Promise<AuthStatus>;
+    refresh: () => Promise<AuthStatus>;
+    profile: () => Promise<UserProfile>;
+    updateProfile: (patch: { displayName?: string }) => Promise<UserProfile>;
+    onChanged: (callback: (status: AuthStatus) => void) => () => void;
+  };
+  billing: {
+    plans: () => Promise<Plan[]>;
+    status: () => Promise<BillingSnapshot>;
+    subscribe: (planId: string) => Promise<AuthStatus>;
+    changePlan: (planId: string) => Promise<BillingSnapshot>;
+    cancel: () => Promise<BillingSnapshot>;
   };
   activity: { list: () => Promise<ActivityEvent[]> };
   settings: {

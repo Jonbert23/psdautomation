@@ -32,6 +32,14 @@ npm run dev
 
 Backup and restore are in Settings.
 
+## Licensing (Base44)
+
+The desktop app signs in against the same Base44 app as the website. Operators only see email/password sign-in; app id and API URL are not shown in the UI.
+
+Developers wire the client with `desktop/.env` (see `.env.example`) or by linking the sibling web app (`base44 link` writes `web/base44/.app.jsonc` and `web/.env.local`). Restart `npm run dev` after those files change.
+
+On first launch, sign in with the website account while online. A grant is stored under the Electron userData `license/` folder (not in `workspace.json`). After that the app can run offline until `expiresAt`. Revoking a license on the website does not instantly lock a PC that already activated.
+
 ## How the two layers will connect (Phase 5)
 
 The UI will write a versioned `job.json`. A new `photoshop/engine.jsx` (not written yet) will read that file, open documents, apply mappings, export, and write `result.json`. The UI will never claim success without that result file.

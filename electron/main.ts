@@ -5,9 +5,24 @@ import { detectPhotoshop } from "./photoshop";
 import { runOrder } from "./runner";
 import { captureLayoutDocument, openLayoutDocument, previewLayoutSize } from "./layout";
 import { generateDesignTemplate } from "./template";
+import { LicenseStore } from "./licenseStore";
+import { LicenseService } from "./license";
+import { initBase44Config } from "./base44";
+import { startWebLoginWindow } from "./webLogin";
+import { startBillingWindow } from "./billing";
+import { PLANS } from "../shared/plans";
 import type { GarmentProfile, ProductionOrder } from "../shared/types";
+import type { AuthStatus } from "../shared/licenseGrant";
 
 let store: WorkspaceStore;
+let license: LicenseService;
+let mainWindow: BrowserWindow | null = null;
+
+function notifyAuthChanged(status: AuthStatus) {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send("auth:changed", status);
+  }
+}
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -23,6 +38,10 @@ function createWindow() {
       nodeIntegration: false,
       sandbox: false,
     },
+  });
+  mainWindow = win;
+  win.on("closed", () => {
+    if (mainWindow === win) mainWindow = null;
   });
 
   const devUrl = process.env.VITE_DEV_SERVER_URL;
@@ -62,8 +81,48 @@ function registerIpc() {
   ipcMain.handle("orders:delete", (_e, id: string) => store.deleteOrder(id));
   ipcMain.handle("jobs:list", () => store.listJobs());
   ipcMain.handle("jobs:get", (_e, id: string) => store.getJob(id));
-  ipcMain.handle("jobs:runOrder", async (_e, orderId: string) => runOrder(store, orderId));
+  ipcMain.handle("jobs:runOrder", async (_e, orderId: string) => {
+    license.assertUsable();
+    return runOrder(store, orderId);
+  });
   ipcMain.handle("activity:list", () => store.listActivity());
+
+  ipcMain.handle("auth:status", () => license.status());
+  ipcMain.handle("auth:login", async (_e, email: string, password: string) => license.login(email, password));
+  ipcMain.handle("auth:startWebLogin", async (event) => {
+    const parent = BrowserWindow.fromWebContents(event.sender) ?? mainWindow;
+    return startWebLoginWindow({
+      parent,
+      license,
+      onChanged: notifyAuthChanged,
+    });
+  });
+  ipcMain.handle("auth:logout", () => {
+    const status = license.logout();
+    notifyAuthChanged(status);
+    return status;
+  });
+  ipcMain.handle("auth:refresh", async () => {
+    const status = await license.refresh();
+    notifyAuthChanged(status);
+    return status;
+  });
+  ipcMain.handle("auth:profile", () => license.profile());
+  ipcMain.handle("auth:updateProfile", (_e, patch: { displayName?: string }) => license.updateProfile(patch));
+  ipcMain.handle("billing:plans", () => PLANS);
+  ipcMain.handle("billing:status", () => license.billingStatus());
+  ipcMain.handle("billing:subscribe", async (event, planId: string) => {
+    const parent = BrowserWindow.fromWebContents(event.sender) ?? mainWindow;
+    const started = await license.createCheckout(planId);
+    return startBillingWindow({
+      parent,
+      license,
+      checkoutUrl: String(started.checkoutUrl),
+      onChanged: notifyAuthChanged,
+    });
+  });
+  ipcMain.handle("billing:changePlan", (_e, planId: string) => license.changePlan(planId));
+  ipcMain.handle("billing:cancel", () => license.cancelBilling());
 
   ipcMain.handle("settings:get", () => store.getSettings());
   ipcMain.handle("settings:update", (_e, patch) => store.updateSettings(patch));
@@ -120,8 +179,12 @@ function registerIpc() {
 }
 
 app.whenReady().then(() => {
-  store = new WorkspaceStore(app.getPath("userData"));
+  const userData = app.getPath("userData");
+  initBase44Config(userData);
+  store = new WorkspaceStore(userData);
+  license = new LicenseService(new LicenseStore(userData));
   registerIpc();
+  void license.refresh();
   createWindow();
 });
 
