@@ -43,18 +43,32 @@ export function LicenseProvider({ children }: { children: React.ReactNode }) {
   }, [load]);
 
   useEffect(() => {
+    const timer = window.setInterval(() => {
+      void api()
+        .auth.refresh()
+        .then((next) => {
+          setStatus(next);
+          if (next.usable) setError("");
+          else if (next.code === "session_replaced" || next.signedIn) setError(next.message);
+        })
+        .catch(() => {});
+    }, 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
     return api().auth.onChanged((next) => {
       setStatus(next);
       setLoading(false);
       if (next.usable) setError("");
-      else if (next.signedIn) setError(next.message);
+      else if (next.code === "session_replaced" || next.signedIn) setError(next.message);
     });
   }, []);
 
   const applyStatus = useCallback((next: AuthStatus) => {
     setStatus(next);
     if (next.usable) setError("");
-    else if (next.signedIn) setError(next.message);
+    else if (next.code === "session_replaced" || next.signedIn) setError(next.message);
     return next;
   }, []);
 

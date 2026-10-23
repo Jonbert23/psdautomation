@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain } from "electron";
+import { app, BrowserWindow, dialog, ipcMain, Notification } from "electron";
 import path from "node:path";
 import { WorkspaceStore } from "./store";
 import { detectPhotoshop } from "./photoshop";
@@ -11,17 +11,56 @@ import { initBase44Config } from "./base44";
 import { startWebLoginWindow } from "./webLogin";
 import { startBillingWindow } from "./billing";
 import { PLANS } from "../shared/plans";
-import type { GarmentProfile, ProductionOrder } from "../shared/types";
+import type { GarmentProfile, ProductionOrder, PublicCatalogProfile } from "../shared/types";
+import { ProfileSync } from "./profileSync";
 import type { AuthStatus } from "../shared/licenseGrant";
 
 let store: WorkspaceStore;
 let license: LicenseService;
+let profileSync: ProfileSync;
 let mainWindow: BrowserWindow | null = null;
 
 function notifyAuthChanged(status: AuthStatus) {
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send("auth:changed", status);
   }
+}
+
+function notifyLicenseExpiry(status: AuthStatus) {
+  const settings = store.getSettings();
+  if (!settings.notifyOnLicenseExpiry || !status.expiresAt || !Notification.isSupported()) return;
+  const expires = new Date(status.expiresAt).getTime();
+  if (!Number.isFinite(expires)) return;
+  const days = (expires - Date.now()) / 86_400_000;
+  if (days < 0 || days > 7 || settings.licenseExpiryNotifiedFor === status.expiresAt) return;
+  new Notification({
+    title: "License expiring",
+    body: `${status.planName || "Your license"} expires on ${new Date(status.expiresAt).toLocaleDateString()}.`,
+  }).show();
+  store.updateSettings({ licenseExpiryNotifiedFor: status.expiresAt });
+}
+
+function lockPageZoom(win: BrowserWindow) {
+  const reset = () => {
+    if (!win.isDestroyed() && win.webContents.getZoomLevel() !== 0) win.webContents.setZoomLevel(0);
+  };
+  win.webContents.on("did-finish-load", () => {
+    reset();
+    void win.webContents.setVisualZoomLevelLimits(1, 1);
+  });
+  win.webContents.on("zoom-changed", reset);
+  win.webContents.on("before-input-event", (event, input) => {
+    if (input.type !== "keyDown" || !input.control || input.alt || input.meta) return;
+    const zoomKey =
+      input.key === "=" ||
+      input.key === "+" ||
+      input.key === "-" ||
+      input.key === "_" ||
+      input.code === "NumpadAdd" ||
+      input.code === "NumpadSubtract" ||
+      (input.key === "0" && !input.shift);
+    if (zoomKey) event.preventDefault();
+  });
 }
 
 function createWindow() {
@@ -40,6 +79,7 @@ function createWindow() {
     },
   });
   mainWindow = win;
+  lockPageZoom(win);
   win.on("closed", () => {
     if (mainWindow === win) mainWindow = null;
   });
@@ -69,11 +109,36 @@ function registerIpc() {
 
   ipcMain.handle("profiles:list", () => store.listProfiles());
   ipcMain.handle("profiles:get", (_e, id: string) => store.getProfile(id));
-  ipcMain.handle("profiles:save", (_e, profile: Partial<GarmentProfile>) => store.saveProfile(profile));
-  ipcMain.handle("profiles:duplicate", (_e, id: string) => store.duplicateProfile(id));
-  ipcMain.handle("profiles:archive", (_e, id: string) => store.setProfileStatus(id, "archived"));
-  ipcMain.handle("profiles:restore", (_e, id: string) => store.setProfileStatus(id, "active"));
-  ipcMain.handle("profiles:delete", (_e, id: string) => store.deleteProfile(id));
+  ipcMain.handle("profiles:save", (_e, profile: Partial<GarmentProfile>) => {
+    const saved = store.saveProfile(profile);
+    profileSync.syncOne(saved.id);
+    return saved;
+  });
+  ipcMain.handle("profiles:duplicate", (_e, id: string) => {
+    const saved = store.duplicateProfile(id);
+    profileSync.syncOne(saved.id);
+    return saved;
+  });
+  ipcMain.handle("profiles:archive", (_e, id: string) => {
+    const saved = store.setProfileStatus(id, "archived");
+    profileSync.syncOne(saved.id);
+    return saved;
+  });
+  ipcMain.handle("profiles:restore", (_e, id: string) => {
+    const saved = store.setProfileStatus(id, "active");
+    profileSync.syncOne(saved.id);
+    return saved;
+  });
+  ipcMain.handle("profiles:delete", (_e, id: string) => {
+    const existing = store.getProfile(id);
+    store.deleteProfile(id);
+    if (existing && !existing.catalogImport) {
+      store.queueProfileDelete(id);
+      void profileSync.flushDeletes();
+    }
+  });
+  ipcMain.handle("catalog:list", () => profileSync.listPublic());
+  ipcMain.handle("catalog:download", (_e, profile: PublicCatalogProfile) => profileSync.download(profile));
 
   ipcMain.handle("orders:list", () => store.listOrders());
   ipcMain.handle("orders:get", (_e, id: string) => store.getOrder(id));
@@ -97,8 +162,8 @@ function registerIpc() {
       onChanged: notifyAuthChanged,
     });
   });
-  ipcMain.handle("auth:logout", () => {
-    const status = license.logout();
+  ipcMain.handle("auth:logout", async () => {
+    const status = await license.logout();
     notifyAuthChanged(status);
     return status;
   });
@@ -109,7 +174,16 @@ function registerIpc() {
   });
   ipcMain.handle("auth:profile", () => license.profile());
   ipcMain.handle("auth:updateProfile", (_e, patch: { displayName?: string }) => license.updateProfile(patch));
-  ipcMain.handle("billing:plans", () => PLANS);
+  ipcMain.handle("billing:plans", async () => {
+    try {
+      const data = await license.callFunction("listPlans", {});
+      const plans = data.plans;
+      if (data.ok === true && Array.isArray(plans) && plans.length > 0) return plans;
+    } catch {
+      // The local catalog is shown when the pricing service cannot be reached.
+    }
+    return PLANS;
+  });
   ipcMain.handle("billing:status", () => license.billingStatus());
   ipcMain.handle("billing:subscribe", async (event, planId: string) => {
     const parent = BrowserWindow.fromWebContents(event.sender) ?? mainWindow;
@@ -183,8 +257,15 @@ app.whenReady().then(() => {
   initBase44Config(userData);
   store = new WorkspaceStore(userData);
   license = new LicenseService(new LicenseStore(userData));
+  profileSync = new ProfileSync(store, license, userData);
   registerIpc();
-  void license.refresh();
+  void profileSync.syncPending();
+  setInterval(() => {
+    void profileSync.syncPending();
+  }, 60_000);
+  void license.refresh()
+    .then((status) => notifyLicenseExpiry(status))
+    .catch(() => {});
   createWindow();
 });
 

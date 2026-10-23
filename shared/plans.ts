@@ -8,7 +8,7 @@ export const PLAN_FEATURES = [
   "Layout in the app and in Photoshop",
   "Template guide layer on every job",
   "Production orders and consistent file names",
-  "One license on this account, used by the Windows app",
+  "One subscription on this account, on one signed-in PC",
 ];
 
 export interface Plan {
@@ -38,7 +38,7 @@ export const PLANS: Plan[] = [
     compareAmount: MONTHLY_AMOUNT,
     amount: termAmount(1, 0),
     currency: "PHP",
-    blurb: "One payment covers one month. Pay again to add another.",
+    blurb: "Paying for one month extends your subscription by one month.",
     features: PLAN_FEATURES,
   },
   {
@@ -50,7 +50,7 @@ export const PLANS: Plan[] = [
     compareAmount: MONTHLY_AMOUNT * 6,
     amount: termAmount(6, 10),
     currency: "PHP",
-    blurb: "Half a year, billed once, at 10% off the monthly price.",
+    blurb: "Paying for six months extends your subscription by six months, at 10% off.",
     features: PLAN_FEATURES,
   },
   {
@@ -62,7 +62,7 @@ export const PLANS: Plan[] = [
     compareAmount: MONTHLY_AMOUNT * 12,
     amount: termAmount(12, 20),
     currency: "PHP",
-    blurb: "A full year, billed once, at 20% off the monthly price.",
+    blurb: "Paying for twelve months extends your subscription by twelve months, at 20% off.",
     features: PLAN_FEATURES,
   },
 ];

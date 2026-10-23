@@ -148,6 +148,8 @@ export interface GarmentProfile {
   layoutReferenceSizeId?: string;
   createdAt: string;
   updatedAt: string;
+  /** Downloaded from the public catalog. This copy stays on this PC. */
+  catalogImport?: boolean;
 }
 
 export interface OrderItem {
@@ -224,6 +226,32 @@ export interface ActivityEvent {
 export interface AppSettings {
   photoshopPath: string;
   lastOutputFolder: string;
+  notifyOnJobFinished: boolean;
+  notifyOnLicenseExpiry: boolean;
+  licenseExpiryNotifiedFor: string | null;
+}
+
+export interface PublicPresetFile {
+  sizeId: string;
+  partId: string;
+  fileName: string;
+  fileUrl: string;
+}
+
+export interface PublicCatalogProfile {
+  id: string;
+  name: string;
+  description: string;
+  categoryName: string;
+  ownerEmail: string;
+  updatedAt: string;
+  status: ProfileStatus;
+  parts: GarmentPart[];
+  sizes: SizeDefinition[];
+  attributes: AttributeDefinition[];
+  exportSettings: ExportSettings;
+  layoutReferenceSizeId?: string;
+  presets: PublicPresetFile[];
 }
 
 export interface AppDatabase {
@@ -234,6 +262,8 @@ export interface AppDatabase {
   jobs: AutomationJob[];
   activity: ActivityEvent[];
   settings: AppSettings;
+  profileSync: Record<string, string>;
+  pendingProfileDeletes: string[];
 }
 
 export interface DashboardStats {

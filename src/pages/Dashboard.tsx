@@ -2,18 +2,41 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api, formatWhen } from "../lib/api";
 import type { DashboardPayload } from "../vite-env";
+import type { PublicCatalogProfile } from "@shared/types";
 
 export function DashboardPage() {
   const navigate = useNavigate();
   const [data, setData] = useState<DashboardPayload | null>(null);
   const [error, setError] = useState("");
+  const [catalog, setCatalog] = useState<PublicCatalogProfile[]>([]);
+  const [catalogError, setCatalogError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [busyId, setBusyId] = useState("");
 
   useEffect(() => {
     api()
       .dashboard()
       .then(setData)
       .catch((e: Error) => setError(e.message));
+    api()
+      .catalog.list()
+      .then(setCatalog)
+      .catch((e: Error) => setCatalogError(e.message));
   }, []);
+
+  async function download(profile: PublicCatalogProfile) {
+    setNotice("");
+    setCatalogError("");
+    setBusyId(profile.id);
+    try {
+      const saved = await api().catalog.download(profile);
+      setNotice(`“${saved.name}” is in your profiles.`);
+    } catch (e) {
+      setCatalogError(e instanceof Error ? e.message : "Could not download that profile.");
+    } finally {
+      setBusyId("");
+    }
+  }
 
   if (error) return <div className="error-banner">{error}</div>;
   if (!data) return <p className="muted">Loading workspace…</p>;
@@ -32,6 +55,37 @@ export function DashboardPage() {
         <Stat label="Completed jobs" value={data.completedJobs} />
         <Stat label="Failed jobs" value={data.failedJobs} danger />
       </div>
+      <section className="card">
+        <h3>Public profiles</h3>
+        <div className="card-body">
+          {catalogError ? <div className="error-banner">{catalogError}</div> : null}
+          {notice ? <div className="ok-banner">{notice}</div> : null}
+          {catalog.length === 0 ? (
+            <div className="empty">No public profiles yet.</div>
+          ) : (
+            <ul className="activity">
+              {catalog.map((profile) => (
+                <li key={profile.id} className="catalog-row">
+                  <div>
+                    <div>{profile.name}</div>
+                    <div className="when">
+                      {[profile.categoryName, profile.ownerEmail].filter(Boolean).join(" · ")}
+                    </div>
+                  </div>
+                  <button
+                    className="btn"
+                    type="button"
+                    disabled={busyId === profile.id}
+                    onClick={() => void download(profile)}
+                  >
+                    {busyId === profile.id ? "Downloading…" : "Download"}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </section>
       <div className="grid-2">
         <section className="card">
           <h3>Recent activity</h3>

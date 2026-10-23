@@ -12,9 +12,6 @@ import {
 import type { LayoutPreviewPart } from "../../vite-env";
 import { api } from "../../lib/api";
 
-const CANVAS_W = 780;
-const CANVAS_H = 420;
-
 export function LayoutStep({
   profile,
   onChange,
@@ -23,21 +20,29 @@ export function LayoutStep({
   onChange: (patch: Partial<GarmentProfile>) => void;
 }) {
   const covered = useMemo(() => sizesWithPresetCoverage(profile), [profile]);
-  const [sizeId, setSizeId] = useState(
-    () => profile.layoutReferenceSizeId || defaultLayoutSizeId(profile) || covered[0]?.id || "",
-  );
+  const sizeId = defaultLayoutSizeId(profile) || "";
   const [previews, setPreviews] = useState<LayoutPreviewPart[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
-  const [busy, setBusy] = useState("");
+  const [canvasSize, setCanvasSize] = useState({ width: 1, height: 1 });
+  const canvasRef = useRef<HTMLDivElement>(null);
   const drag = useRef<{ partId: string; startX: number; startY: number; origX: number; origY: number } | null>(null);
 
-  useEffect(() => {
-    if (!sizeId && covered[0]) setSizeId(covered[0].id);
-  }, [covered, sizeId]);
-
   const presetKey = profile.presetAssignments.map((a) => `${a.sizeId}:${a.partId}:${a.filePath}`).join("|");
+
+  useEffect(() => {
+    const node = canvasRef.current;
+    if (!node) return;
+    const update = () => {
+      const rect = node.getBoundingClientRect();
+      setCanvasSize({ width: Math.max(1, rect.width), height: Math.max(1, rect.height) });
+    };
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [covered.length]);
 
   useEffect(() => {
     if (!sizeId) {
@@ -64,7 +69,12 @@ export function LayoutStep({
   const placed = layoutPlacements(profile.parts, sizes);
   const bounds = layoutBounds(placed);
   const docPlaced = documentPlacements(placed);
-  const scale = Math.min(CANVAS_W / Math.max(bounds.width, 1), CANVAS_H / Math.max(bounds.height, 1), 1);
+  const scale = Math.min(
+    canvasSize.width / Math.max(bounds.width, 1),
+    canvasSize.height / Math.max(bounds.height, 1),
+  );
+  const offsetX = (canvasSize.width - bounds.width * scale) / 2;
+  const offsetY = (canvasSize.height - bounds.height * scale) / 2;
   const previewById = new Map(previews.map((p) => [p.partId, p]));
   const selected = profile.parts.find((p) => p.id === selectedId);
   const selectedPlace = placed.find((p) => p.partId === selectedId);
@@ -111,45 +121,15 @@ export function LayoutStep({
     drag.current = null;
   }
 
-  async function openPhotoshop() {
-    setError("");
-    setNotice("");
-    setBusy("Opening Photoshop…");
-    try {
-      await api().layout.open(profile, sizeId);
-      setNotice("Photoshop is open. Move the part:* layers, then click Capture layout.");
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy("");
-    }
-  }
-
-  async function capturePhotoshop() {
-    setError("");
-    setNotice("");
-    setBusy("Capturing layout…");
-    try {
-      const next = await api().layout.capture(profile);
-      onChange({ parts: next.parts, layoutReferenceSizeId: sizeId });
-      setNotice("Captured layer positions from Photoshop.");
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy("");
-    }
-  }
-
   function resetRow() {
     onChange({ parts: resetLayoutOffsets(profile.parts), layoutReferenceSizeId: sizeId });
     setNotice("Offsets cleared. Parts will pack left to right until you arrange them.");
   }
 
   return (
-    <>
+    <div className="layout-step">
       <p className="page-lead">
-        Arrange parts once for every size. Drag on the canvas, or open Photoshop, move the layers, then capture. Original
-        PNG presets are not overwritten.
+        Arrange parts once for every size. Drag them on the canvas. Original PNG presets are not overwritten.
       </p>
       {error && <div className="error-banner">{error}</div>}
       {notice && <div className="ok-banner">{notice}</div>}
@@ -158,37 +138,13 @@ export function LayoutStep({
       ) : (
         <>
           <div className="toolbar">
-            <label className="field" style={{ minWidth: 180 }}>
-              <span>Preview size</span>
-              <select
-                className="select"
-                value={sizeId}
-                onChange={(e) => {
-                  setSizeId(e.target.value);
-                  onChange({ layoutReferenceSizeId: e.target.value });
-                }}
-              >
-                {covered.map((size) => (
-                  <option key={size.id} value={size.id}>
-                    {size.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button className="btn primary" disabled={Boolean(busy) || !sizeId} onClick={openPhotoshop}>
-              Open in Photoshop
-            </button>
-            <button className="btn" disabled={Boolean(busy)} onClick={capturePhotoshop}>
-              Capture layout
-            </button>
-            <button className="btn" onClick={resetRow}>
+            <button className="btn" type="button" onClick={resetRow}>
               Reset to auto-row
             </button>
-            {busy && <span className="muted">{busy}</span>}
           </div>
           <div
+            ref={canvasRef}
             className="layout-canvas"
-            style={{ width: CANVAS_W, height: CANVAS_H }}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
             onPointerCancel={onPointerUp}
@@ -202,8 +158,8 @@ export function LayoutStep({
                   type="button"
                   className={`layout-part${selectedId === item.partId ? " selected" : ""}`}
                   style={{
-                    left: item.x * scale,
-                    top: item.y * scale,
+                    left: offsetX + item.x * scale,
+                    top: offsetY + item.y * scale,
                     width: item.width * scale,
                     height: item.height * scale,
                     backgroundImage: `url(${preview.dataUrl})`,
@@ -250,6 +206,6 @@ export function LayoutStep({
           </p>
         </>
       )}
-    </>
+    </div>
   );
 }

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Category, GarmentProfile } from "@shared/types";
 import { templateGuideReady } from "@shared/steps";
+import { FolderCard, FolderGrid } from "../components/FolderCard";
 import { api, formatWhen } from "../lib/api";
 
 export function ProfilesPage() {
@@ -106,64 +107,46 @@ export function ProfilesPage() {
           </div>
         </div>
       ) : (
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Category</th>
-                <th>Parts</th>
-                <th>Sizes</th>
-                <th>Attributes</th>
-                <th>Updated</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((p) => (
-                <tr key={p.id}>
-                  <td>
-                    <strong>{p.name || "Untitled"}</strong>
-                    <div className="muted">{p.status}</div>
-                  </td>
-                  <td>{catName(p.categoryId)}</td>
-                  <td>{p.parts.length}</td>
-                  <td>{p.sizes.length}</td>
-                  <td>{p.attributes.length}</td>
-                  <td className="muted">{formatWhen(p.updatedAt)}</td>
-                  <td>
-                    <div className="row-actions">
-                      <button className="btn" onClick={() => navigate(`/profiles/${p.id}`)}>
-                        Edit
-                      </button>
-                      <button className="btn" onClick={() => onDuplicate(p.id)}>
-                        Duplicate
-                      </button>
-                      <button
-                        className="btn"
-                        disabled={guideBusyId !== null || !templateGuideReady(p)}
-                        title={
-                          templateGuideReady(p)
-                            ? "Build a PSD with part groups and field text layers"
-                            : "Finish Parts, Sizes, Presets, Layout, and Fields first"
-                        }
-                        onClick={() => onTemplateGuide(p)}
-                      >
-                        {guideBusyId === p.id ? "Generating…" : "Template Guide"}
-                      </button>
-                      <button className="btn" onClick={() => onArchive(p.id, p.status === "archived")}>
-                        {p.status === "archived" ? "Restore" : "Archive"}
-                      </button>
-                      <button className="btn danger" onClick={() => onDelete(p.id)}>
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <FolderGrid>
+          {filtered.map((p) => (
+            <FolderCard
+              key={p.id}
+              name={p.name || "Untitled"}
+              detail={`${catName(p.categoryId)} · ${p.parts.length} parts · ${p.sizes.length} sizes · ${p.attributes.length} fields`}
+              status={p.status}
+              updated={formatWhen(p.updatedAt)}
+              onOpen={() => navigate(`/profiles/${p.id}`)}
+              actions={
+                <>
+                  <button className="btn" onClick={() => navigate(`/profiles/${p.id}`)}>
+                    Edit
+                  </button>
+                  <button className="btn" onClick={() => onDuplicate(p.id)}>
+                    Duplicate
+                  </button>
+                  <button
+                    className="btn"
+                    disabled={guideBusyId !== null || !templateGuideReady(p)}
+                    title={
+                      templateGuideReady(p)
+                        ? "Build a PSD with part groups and field text layers"
+                        : "Finish Parts, Sizes, Presets, Layout, and Fields first"
+                    }
+                    onClick={() => onTemplateGuide(p)}
+                  >
+                    {guideBusyId === p.id ? "Generating…" : "Template Guide"}
+                  </button>
+                  <button className="btn" onClick={() => onArchive(p.id, p.status === "archived")}>
+                    {p.status === "archived" ? "Restore" : "Archive"}
+                  </button>
+                  <button className="btn danger" onClick={() => onDelete(p.id)}>
+                    Delete
+                  </button>
+                </>
+              }
+            />
+          ))}
+        </FolderGrid>
       )}
     </>
   );

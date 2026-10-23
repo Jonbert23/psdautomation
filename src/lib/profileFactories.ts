@@ -49,13 +49,11 @@ export function newAttribute(sortOrder: number, type: AttributeType = "text"): A
   };
 }
 
-export function moveItem<T>(list: T[], index: number, dir: -1 | 1): T[] {
-  const next = index + dir;
-  if (next < 0 || next >= list.length) return list;
+export function reorderItem<T>(list: T[], from: number, to: number): T[] {
+  if (from === to || from < 0 || to < 0 || from >= list.length || to >= list.length) return list;
   const copy = list.slice();
-  const tmp = copy[index];
-  copy[index] = copy[next];
-  copy[next] = tmp;
+  const [item] = copy.splice(from, 1);
+  copy.splice(to, 0, item);
   return copy;
 }
 

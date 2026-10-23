@@ -1,4 +1,4 @@
-import type { AppDatabase, Category, ExportSettings, GarmentProfile } from "./types";
+import type { AppDatabase, AppSettings, Category, ExportSettings, GarmentProfile } from "./types";
 import { SCHEMA_VERSION } from "./types";
 import { createId, nowIso } from "./ids";
 
@@ -59,6 +59,16 @@ export function seedCategories(): Category[] {
   }));
 }
 
+export function defaultSettings(): AppSettings {
+  return {
+    photoshopPath: "",
+    lastOutputFolder: "",
+    notifyOnJobFinished: false,
+    notifyOnLicenseExpiry: false,
+    licenseExpiryNotifiedFor: null,
+  };
+}
+
 export function emptyDatabase(): AppDatabase {
   return {
     schemaVersion: SCHEMA_VERSION,
@@ -74,9 +84,8 @@ export function emptyDatabase(): AppDatabase {
         message: "Workspace initialized. Create a garment profile to begin.",
       },
     ],
-    settings: {
-      photoshopPath: "",
-      lastOutputFolder: "",
-    },
+    settings: defaultSettings(),
+    profileSync: {},
+    pendingProfileDeletes: [],
   };
 }

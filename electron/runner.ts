@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { app } from "electron";
+import { app, Notification } from "electron";
 import type { AutomationJob, GarmentProfile, JobItem } from "../shared/types";
 import { createId, nowIso } from "../shared/ids";
 import { profileReadyForAutomation, validateOrder } from "../shared/validation";
@@ -218,6 +218,7 @@ export async function runOrder(store: WorkspaceStore, orderId: string): Promise<
     };
     store.saveJob(job);
     store.saveOrder({ ...order, status: result.ok ? "completed" : "failed" });
+    notifyJobFinished(store, Boolean(result.ok));
     return job;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -233,6 +234,15 @@ export async function runOrder(store: WorkspaceStore, orderId: string): Promise<
     };
     store.saveJob(job);
     store.saveOrder({ ...order, status: "failed" });
+    notifyJobFinished(store, false);
     throw new Error(message);
   }
+}
+
+function notifyJobFinished(store: WorkspaceStore, ok: boolean) {
+  if (!store.getSettings().notifyOnJobFinished || !Notification.isSupported()) return;
+  new Notification({
+    title: ok ? "Automation finished" : "Automation failed",
+    body: ok ? "Photoshop finished this job." : "Photoshop did not finish this job.",
+  }).show();
 }

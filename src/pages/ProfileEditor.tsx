@@ -87,7 +87,7 @@ export function ProfileEditorPage() {
           </button>
         ))}
       </nav>
-      <div className="editor-main">
+      <div className={step === "layout" ? "editor-main layout-fill" : "editor-main"}>
         {error && <div className="error-banner">{error}</div>}
         {notice && <div className="ok-banner">{notice}</div>}
         {step === "identity" && <IdentityStep profile={profile} categories={categories} onChange={patch} />}

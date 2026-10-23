@@ -39,12 +39,17 @@ export class LicenseStore {
     return this.record?.lastMessage || null;
   }
 
+  getSessionId(): string | null {
+    return this.record?.sessionId || null;
+  }
+
   saveSession(patch: Partial<StoredLicense> & { token: string }): void {
     const next: StoredLicense = {
       token: patch.token,
       grant: patch.grant === undefined ? this.record?.grant || null : patch.grant,
       lastCode: patch.lastCode === undefined ? this.record?.lastCode || null : patch.lastCode,
       lastMessage: patch.lastMessage === undefined ? this.record?.lastMessage || null : patch.lastMessage,
+      sessionId: patch.sessionId === undefined ? this.record?.sessionId || null : patch.sessionId,
     };
     this.record = next;
     this.write(next);
@@ -69,7 +74,8 @@ export class LicenseStore {
     if (!fs.existsSync(this.filePath)) return null;
     try {
       const parsed = JSON.parse(fs.readFileSync(this.filePath, "utf8")) as StoredLicense;
-      if (!parsed?.token) return null;
+      if (!parsed || typeof parsed !== "object") return null;
+      if (!parsed.token && parsed.lastCode !== "session_replaced") return null;
       return parsed;
     } catch {
       return null;

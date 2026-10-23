@@ -19,15 +19,19 @@ export function LoginPage() {
     }
   }
 
-  const message = localError || error || (status && !status.usable && status.signedIn ? status.message : "");
+  const message =
+    localError ||
+    error ||
+    (status?.code === "session_replaced" ? status.message : "") ||
+    (status && !status.usable && status.signedIn ? status.message : "");
 
   return (
     <div className="auth-card">
       <p className="auth-kicker">PSD Automation</p>
       <h1 id="auth-overlay-title">Sign in with Google</h1>
       <p className="muted">
-        Use the same website account. This PC is licensed after the first successful sign-in. The app stays on screen
-        but cannot be used until you finish.
+        Use the same website account. A new account includes 30 days, and paying for a plan extends that
+        subscription. Only this PC stays signed in. The app stays on screen but cannot be used until you finish.
       </p>
       {message ? <div className="error-banner">{message}</div> : null}
       <button className="btn google" type="button" onClick={() => void onGoogle()} disabled={busy}>

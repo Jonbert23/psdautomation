@@ -1,3 +1,4 @@
+import { Upload } from "lucide-react";
 import type { GarmentProfile, PresetAssignment } from "@shared/types";
 import { resolvePresets } from "@shared/presets";
 import { presetCoverage } from "@shared/steps";
@@ -35,12 +36,6 @@ export function PresetsStep({
     if (file) setCell(sizeId, partId, file);
   }
 
-  function reuseFrom(sizeId: string, partId: string, sourcePath: string) {
-    setCell(sizeId, partId, sourcePath);
-  }
-
-  const knownPaths = [...new Set(profile.presetAssignments.map((a) => a.filePath).filter(Boolean))];
-
   if (parts.length === 0 || sizes.length === 0) {
     return (
       <div className="empty">Add at least one enabled part and one enabled size before assigning presets.</div>
@@ -50,8 +45,8 @@ export function PresetsStep({
   return (
     <>
       <p className="page-lead">
-        Each size and required part needs a PNG layout (silhouette or mask). The same PNG can be reused. Missing
-        required cells stay highlighted — the engine will not pick another size for you.
+        Each size and required part needs a PNG layout (silhouette or mask). Missing required cells stay
+        highlighted — the engine will not pick another size for you.
       </p>
       <p className="muted">
         Required coverage: {coverage.filled}/{coverage.required}
@@ -91,35 +86,22 @@ export function PresetsStep({
                       <div className="path-row">
                         <input
                           className="input"
-                          value={current?.filePath ?? ""}
+                          readOnly
+                          value={current?.filePath ? fileName(current.filePath) : ""}
                           placeholder={part.required ? "Required" : "Optional"}
-                          onChange={(e) => setCell(size.id, part.id, e.target.value)}
+                          aria-label={current?.filePath ? fileName(current.filePath) : "No preset"}
                         />
-                        <button className="btn" onClick={() => browse(size.id, part.id)}>
-                          Browse
+                        <button
+                          className="btn icon-btn"
+                          type="button"
+                          aria-label="Upload preset"
+                          onClick={() => browse(size.id, part.id)}
+                        >
+                          <Upload size={16} strokeWidth={1.75} />
                         </button>
                       </div>
-                      {current?.filePath ? (
-                        <div className="muted">{fileName(current.filePath)}</div>
-                      ) : null}
                       {duplicate ? <div className="muted">Duplicate assignment</div> : null}
                       {notPng ? <div className="muted">Must be a PNG</div> : null}
-                      {knownPaths.length > 0 && (
-                        <select
-                          className="select"
-                          value=""
-                          onChange={(e) => {
-                            if (e.target.value) reuseFrom(size.id, part.id, e.target.value);
-                          }}
-                        >
-                          <option value="">Reuse file…</option>
-                          {knownPaths.map((p) => (
-                            <option key={p} value={p}>
-                              {fileName(p)}
-                            </option>
-                          ))}
-                        </select>
-                      )}
                     </td>
                   );
                 })}

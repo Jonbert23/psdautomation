@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PLANS, formatPeso, planPayLabel, type Plan } from "@shared/plans";
+import { api } from "../lib/api";
 
 export function PlanPicker({
   currentPlanId,
@@ -11,6 +12,20 @@ export function PlanPicker({
   onSelect: (plan: Plan) => Promise<void>;
 }) {
   const [busyId, setBusyId] = useState("");
+  const [plans, setPlans] = useState<Plan[]>(PLANS);
+
+  useEffect(() => {
+    let cancel = false;
+    api()
+      .billing.plans()
+      .then((next) => {
+        if (!cancel && Array.isArray(next) && next.length > 0) setPlans(next);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancel = true;
+    };
+  }, []);
 
   async function choose(plan: Plan) {
     setBusyId(plan.id);
@@ -23,7 +38,7 @@ export function PlanPicker({
 
   return (
     <div className="plan-grid">
-      {PLANS.map((plan) => {
+      {plans.map((plan) => {
         const current = currentPlanId === plan.id;
         const busy = busyId === plan.id;
         const monthly = formatPeso(Math.round(plan.amount / plan.months));

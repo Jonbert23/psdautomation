@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import type { AppDatabase, ActivityEvent, AutomationJob, GarmentProfile, ProductionOrder } from "../shared/types";
 import { SCHEMA_VERSION } from "../shared/types";
-import { emptyDatabase, emptyProfile } from "../shared/defaults";
+import { defaultSettings, emptyDatabase, emptyProfile } from "../shared/defaults";
 import { normalizeOrder } from "../shared/orders";
 import { createId, nowIso } from "../shared/ids";
 import { validateProfile, validateSchemaVersion } from "../shared/validation";
@@ -150,6 +150,7 @@ export class WorkspaceStore {
       id: createId("prf"),
       name: `${source.name} copy`,
       status: "active",
+      catalogImport: false,
       createdAt: nowIso(),
       updatedAt: nowIso(),
     });
@@ -174,6 +175,41 @@ export class WorkspaceStore {
     if (!profile) throw new Error("Profile not found.");
     this.data.profiles = this.data.profiles.filter((p) => p.id !== id);
     this.log("profile", `Deleted profile "${profile.name}"`, id);
+    this.persist();
+  }
+
+  ensureCategory(name: string) {
+    const trimmed = name.trim() || "Custom garment";
+    const found = this.data.categories.find((c) => c.name.toLowerCase() === trimmed.toLowerCase());
+    if (found) return found;
+    return this.addCategory(trimmed);
+  }
+
+  syncStamp(id: string): string {
+    return this.data.profileSync?.[id] || "";
+  }
+
+  markProfileSynced(id: string, updatedAt: string) {
+    this.data.profileSync = { ...(this.data.profileSync || {}), [id]: updatedAt };
+    this.persist();
+  }
+
+  pendingDeletes(): string[] {
+    return this.data.pendingProfileDeletes || [];
+  }
+
+  queueProfileDelete(id: string) {
+    const pending = new Set(this.data.pendingProfileDeletes || []);
+    pending.add(id);
+    const sync = { ...(this.data.profileSync || {}) };
+    delete sync[id];
+    this.data.pendingProfileDeletes = [...pending];
+    this.data.profileSync = sync;
+    this.persist();
+  }
+
+  completeProfileDelete(id: string) {
+    this.data.pendingProfileDeletes = (this.data.pendingProfileDeletes || []).filter((item) => item !== id);
     this.persist();
   }
 
@@ -236,11 +272,11 @@ export class WorkspaceStore {
   }
 
   getSettings() {
-    return this.data.settings;
+    return { ...defaultSettings(), ...this.data.settings };
   }
 
   updateSettings(patch: Partial<AppDatabase["settings"]>) {
-    this.data.settings = { ...this.data.settings, ...patch };
+    this.data.settings = { ...defaultSettings(), ...this.data.settings, ...patch };
     this.persist();
     return this.data.settings;
   }

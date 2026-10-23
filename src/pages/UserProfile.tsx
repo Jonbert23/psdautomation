@@ -96,8 +96,8 @@ export function UserProfilePage() {
         <div className="card-body">
           <p className="muted">
             {profile?.planName
-              ? `${profile.planName} is licensed until ${expiryLabel}. Pay again to add another term.`
-              : "No license yet. Pay here for 1, 6, or 12 months. The license is stored on the website."}
+              ? `${profile.planName} runs until ${expiryLabel}. Paying for a plan extends this subscription.`
+              : "No subscription yet. Pay for 1, 6, or 12 months to start one. The subscription is stored on the website."}
           </p>
           <PlanPicker
             currentPlanId={subscription?.status === "active" ? subscription.planId : null}
@@ -109,7 +109,7 @@ export function UserProfilePage() {
                 await refresh();
                 const billing = await api().billing.status();
                 setSubscription(billing.subscription);
-                setMessage("Payment window closed. The license updates after PayMongo confirms the payment.");
+                setMessage("Payment window closed. The subscription extends after PayMongo confirms the payment.");
               } catch (err) {
                 setError(err instanceof Error ? err.message : "Could not start payment.");
               }

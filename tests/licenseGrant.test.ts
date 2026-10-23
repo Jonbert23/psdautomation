@@ -56,8 +56,9 @@ describe("normalizeDisplayName", () => {
 
 describe("licenseMessage", () => {
   it("maps server codes to the account-page copy", () => {
-    expect(licenseMessage("no_license")).toBe("Choose a plan and pay for 1, 6, or 12 months to activate this PC.");
-    expect(licenseMessage("expired")).toBe("License has expired. Pay again to add another term.");
+    expect(licenseMessage("no_license")).toBe("Choose a plan and pay for 1, 6, or 12 months to start your subscription.");
+    expect(licenseMessage("expired")).toBe("Your subscription has expired. Pay for a plan to extend it.");
+    expect(licenseMessage("session_replaced")).toBe("This account signed in on another device.");
     expect(licenseMessage("revoked")).toBe("License has been revoked.");
   });
 });

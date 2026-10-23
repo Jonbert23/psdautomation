@@ -28,7 +28,7 @@ export function LicenseBlockedPage() {
       <h1 id="auth-overlay-title">Pay to use this PC</h1>
       <p className="muted">
         {status?.message ||
-          "Choose a term. One payment covers 1, 6, or 12 months, and a longer term is discounted. Pay again to renew."}
+          "A new account includes 30 days. Paying extends that subscription by 1, 6, or 12 months. A longer plan costs less per month."}
       </p>
       {status?.email ? <p className="muted">Signed in as {status.email}</p> : null}
       {error ? <div className="error-banner">{error}</div> : null}

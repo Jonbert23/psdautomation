@@ -10,12 +10,14 @@ import { OrderEditorPage } from "./pages/OrderEditor";
 import { JobsPage } from "./pages/Jobs";
 import { SettingsPage } from "./pages/Settings";
 import { UserProfilePage } from "./pages/UserProfile";
+import App1Demo from "./pages/App1Demo";
 
 export default function App() {
   return (
     <LicenseProvider>
       <LicenseGate>
         <Routes>
+          <Route path="/app-1" element={<App1Demo />} />
           <Route element={<AppShell />}>
             <Route path="/" element={<DashboardPage />} />
             <Route path="/profiles" element={<ProfilesPage />} />

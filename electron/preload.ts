@@ -16,6 +16,10 @@ contextBridge.exposeInMainWorld("api", {
     restore: (id: string) => ipcRenderer.invoke("profiles:restore", id),
     delete: (id: string) => ipcRenderer.invoke("profiles:delete", id),
   },
+  catalog: {
+    list: () => ipcRenderer.invoke("catalog:list"),
+    download: (profile: unknown) => ipcRenderer.invoke("catalog:download", profile),
+  },
   orders: {
     list: () => ipcRenderer.invoke("orders:list"),
     get: (id: string) => ipcRenderer.invoke("orders:get", id),

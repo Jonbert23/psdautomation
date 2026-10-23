@@ -2,7 +2,8 @@ import type { AttributeDefinition, AttributeType, GarmentProfile } from "@shared
 import { starterFields } from "@shared/starters";
 import { enabledPartsSorted } from "@shared/layout";
 import { TEXT_FIELD_TYPES } from "@shared/templateSpec";
-import { moveItem, newAttribute, slugKey } from "../../lib/profileFactories";
+import { newAttribute, slugKey } from "../../lib/profileFactories";
+import { ReorderHandle, useRowReorder } from "../../components/ReorderHandle";
 
 const TYPES: AttributeType[] = ["text", "number", "select", "color", "image", "checkbox"];
 
@@ -15,6 +16,7 @@ export function FieldsStep({
 }) {
   const attrs = [...profile.attributes].sort((a, b) => a.sortOrder - b.sortOrder);
   const parts = enabledPartsSorted(profile.parts);
+  const reorder = useRowReorder(attrs, (next: AttributeDefinition[]) => setAttrs(next));
 
   function setAttrs(next: AttributeDefinition[]) {
     onChange({ attributes: next.map((a, i) => ({ ...a, sortOrder: i })) });
@@ -61,6 +63,7 @@ export function FieldsStep({
           <table>
             <thead>
               <tr>
+                <th />
                 <th>Display name</th>
                 <th>Key</th>
                 <th>Type</th>
@@ -72,7 +75,10 @@ export function FieldsStep({
             </thead>
             <tbody>
               {attrs.map((attr, index) => (
-                <tr key={attr.id}>
+                <tr key={attr.id} {...reorder.rowProps(index)}>
+                  <td>
+                    <ReorderHandle label={`Drag ${attr.displayName || "field"}`} {...reorder.handleProps(index)} />
+                  </td>
                   <td>
                     <input
                       className="input"
@@ -172,16 +178,6 @@ export function FieldsStep({
                   </td>
                   <td>
                     <div className="row-actions">
-                      <button className="btn" disabled={index === 0} onClick={() => setAttrs(moveItem(attrs, index, -1))}>
-                        Up
-                      </button>
-                      <button
-                        className="btn"
-                        disabled={index === attrs.length - 1}
-                        onClick={() => setAttrs(moveItem(attrs, index, 1))}
-                      >
-                        Down
-                      </button>
                       <button className="btn danger" onClick={() => setAttrs(attrs.filter((a) => a.id !== attr.id))}>
                         Delete
                       </button>

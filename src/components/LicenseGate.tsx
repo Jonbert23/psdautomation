@@ -11,7 +11,7 @@ export function LicenseGate({ children }: { children: ReactNode }) {
   return (
     <div className="app-root">
       <div
-        className={usable ? undefined : "app-inert"}
+        className={usable ? "h-full min-h-0" : "app-inert"}
         aria-hidden={!usable}
         ref={(node) => {
           if (node) node.inert = !usable;

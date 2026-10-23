@@ -1,6 +1,7 @@
 import type { GarmentPart, GarmentProfile, ScaleMode } from "@shared/types";
 import { starterParts } from "@shared/starters";
-import { moveItem, newPart } from "../../lib/profileFactories";
+import { newPart } from "../../lib/profileFactories";
+import { ReorderHandle, useRowReorder } from "../../components/ReorderHandle";
 
 const SCALE_MODES: ScaleMode[] = ["stretch", "fit", "fill", "contain"];
 
@@ -12,6 +13,7 @@ export function PartsStep({
   onChange: (patch: Partial<GarmentProfile>) => void;
 }) {
   const parts = [...profile.parts].sort((a, b) => a.sortOrder - b.sortOrder);
+  const reorder = useRowReorder(parts, (next: GarmentPart[]) => setParts(next));
 
   function setParts(next: GarmentPart[]) {
     onChange({ parts: next.map((p, i) => ({ ...p, sortOrder: i })) });
@@ -61,6 +63,7 @@ export function PartsStep({
           <table>
             <thead>
               <tr>
+                <th />
                 <th>Part name</th>
                 <th>Layer name</th>
                 <th>Required</th>
@@ -72,7 +75,10 @@ export function PartsStep({
             </thead>
             <tbody>
               {parts.map((part, index) => (
-                <tr key={part.id}>
+                <tr key={part.id} {...reorder.rowProps(index)}>
+                  <td>
+                    <ReorderHandle label={`Drag ${part.name || "part"}`} {...reorder.handleProps(index)} />
+                  </td>
                   <td>
                     <input
                       className="input"
@@ -125,16 +131,6 @@ export function PartsStep({
                   </td>
                   <td>
                     <div className="row-actions">
-                      <button className="btn" disabled={index === 0} onClick={() => setParts(moveItem(parts, index, -1))}>
-                        Up
-                      </button>
-                      <button
-                        className="btn"
-                        disabled={index === parts.length - 1}
-                        onClick={() => setParts(moveItem(parts, index, 1))}
-                      >
-                        Down
-                      </button>
                       <button className="btn" onClick={() => duplicate(part)}>
                         Duplicate
                       </button>

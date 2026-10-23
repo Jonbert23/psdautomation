@@ -17,9 +17,9 @@ export function createBase44Client(token?: string | null) {
   });
 }
 
-function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+function withTimeout<T>(promise: Promise<T>, ms: number, timeoutMessage: string): Promise<T> {
   return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error("Timed out contacting the licensing server.")), ms);
+    const timer = setTimeout(() => reject(new Error(timeoutMessage)), ms);
     promise.then(
       (value) => {
         clearTimeout(timer);
@@ -33,9 +33,15 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   });
 }
 
-export async function invokeFunction(client: ReturnType<typeof createBase44Client>, name: string, data: Record<string, unknown> = {}) {
+export async function invokeFunction(
+  client: ReturnType<typeof createBase44Client>,
+  name: string,
+  data: Record<string, unknown> = {},
+  timeoutMs = 12000,
+) {
   try {
-    const result = await withTimeout(client.functions.invoke(name, data), 12000);
+    const timeoutMessage = timeoutMs === 12000 ? "Timed out contacting the licensing server." : "Timed out contacting the server.";
+    const result = await withTimeout(client.functions.invoke(name, data), timeoutMs, timeoutMessage);
     return (result?.data ?? result) as Record<string, unknown>;
   } catch (error: unknown) {
     const err = error as { data?: Record<string, unknown>; response?: { data?: Record<string, unknown> } };

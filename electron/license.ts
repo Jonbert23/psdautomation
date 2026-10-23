@@ -1,4 +1,5 @@
 import os from "node:os";
+import { randomUUID } from "node:crypto";
 import { app } from "electron";
 import { createBase44Client, invokeFunction, readBase44Config } from "./base44";
 import type { LicenseStore } from "./licenseStore";
@@ -82,6 +83,18 @@ export class LicenseService {
     const token = this.store.getToken();
     const grant = this.store.getGrant();
     if (!token) {
+      if (this.store.getLastCode() === "session_replaced") {
+        return {
+          configured: true,
+          signedIn: false,
+          usable: false,
+          email: null,
+          planName: null,
+          expiresAt: null,
+          code: "session_replaced",
+          message: this.store.getLastMessage() || licenseMessage("session_replaced"),
+        };
+      }
       return {
         configured: true,
         signedIn: false,
@@ -152,9 +165,15 @@ export class LicenseService {
     } catch {
       // Node has no localStorage; the client already received the token above.
     }
-    this.store.saveSession({ token: trimmed, grant: null, lastCode: null, lastMessage: null });
+    this.store.saveSession({
+      token: trimmed,
+      grant: null,
+      lastCode: null,
+      lastMessage: null,
+      sessionId: randomUUID(),
+    });
     try {
-      await this.activate({ requireGrant: true });
+      await this.activate({ requireGrant: true, claim: true });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Could not activate this PC.";
       this.store.saveSession({ token: trimmed, grant: null, lastCode: "error", lastMessage: message });
@@ -162,13 +181,28 @@ export class LicenseService {
     return this.status();
   }
 
-  logout(): AuthStatus {
+  async logout(): Promise<AuthStatus> {
+    const token = this.store.getToken();
+    const sessionId = this.store.getSessionId();
+    if (token && sessionId) {
+      try {
+        const client = this.authedClient(token);
+        await invokeFunction(client, "activateDesktop", {
+          release: true,
+          sessionId,
+          machineId: this.store.getMachineId(),
+        });
+      } catch {
+        // Local sign-out still proceeds when the server cannot be reached.
+      }
+    }
     this.store.clear();
     return this.status();
   }
 
   async refresh(): Promise<AuthStatus> {
-    await this.activate({ requireGrant: false });
+    const hadSession = Boolean(this.store.getSessionId());
+    await this.activate({ requireGrant: false, claim: !hadSession });
     return this.status();
   }
 
@@ -222,6 +256,9 @@ export class LicenseService {
 
   async createCheckout(planId: string): Promise<BillingSnapshot> {
     const data = await this.invokeBilling("createSubscription", { planId, returnTo: "desktop" });
+    // #region agent log
+    fetch("http://127.0.0.1:7811/ingest/dce6d23b-f6e3-4afb-aaad-a9ad6ee08b21", { method: "POST", headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "642636" }, body: JSON.stringify({ sessionId: "642636", runId: "subscribe", hypothesisId: "A", location: "electron/license.ts:createCheckout", message: "createSubscription response", data: { planId, ok: data.ok === true, code: typeof data.code === "string" ? data.code : null, message: typeof data.message === "string" ? data.message : null, appHost: (() => { try { return new URL(readBase44Config().appBaseUrl).host; } catch { return ""; } })() }, timestamp: Date.now() }) }).catch(() => {});
+    // #endregion
     if (!data.ok) throw new Error(String(data.message || "Could not start the subscription."));
     const checkoutUrl = typeof data.checkoutUrl === "string" ? data.checkoutUrl : "";
     if (!checkoutUrl) throw new Error("PayMongo did not return a payment page.");
@@ -250,6 +287,12 @@ export class LicenseService {
     };
   }
 
+  async callFunction(name: string, data: Record<string, unknown>, timeoutMs = 12000): Promise<Record<string, unknown>> {
+    const token = this.store.getToken();
+    if (!token) throw new Error("Sign in required.");
+    return invokeFunction(this.authedClient(token), name, data, timeoutMs);
+  }
+
   private async invokeBilling(name: string, data: Record<string, unknown>): Promise<Record<string, unknown>> {
     const token = this.store.getToken();
     if (!token) throw new Error("Sign in required.");
@@ -266,7 +309,7 @@ export class LicenseService {
     return client;
   }
 
-  private async activate(options: { requireGrant: boolean }): Promise<void> {
+  private async activate(options: { requireGrant: boolean; claim?: boolean }): Promise<void> {
     const token = this.store.getToken();
     if (!token) return;
 
@@ -278,12 +321,20 @@ export class LicenseService {
       // Ignored in the main process.
     }
 
+    let sessionId = this.store.getSessionId();
+    if (!sessionId) {
+      sessionId = randomUUID();
+      this.store.saveSession({ token, sessionId });
+    }
+
     let data: Record<string, unknown>;
     try {
       data = await invokeFunction(client, "activateDesktop", {
         machineId: this.store.getMachineId(),
         machineLabel: os.hostname().slice(0, 120),
         appVersion: appVersion(),
+        sessionId,
+        claim: Boolean(options.claim),
       });
     } catch (error) {
       if (options.requireGrant) {
@@ -304,6 +355,17 @@ export class LicenseService {
 
     if (code === "unauthorized") {
       this.store.clear();
+      return;
+    }
+
+    if (code === "session_replaced") {
+      this.store.saveSession({
+        token: "",
+        grant: null,
+        sessionId: null,
+        lastCode: "session_replaced",
+        lastMessage: message || licenseMessage("session_replaced"),
+      });
       return;
     }
 

@@ -13,6 +13,7 @@ export interface StoredLicense {
   grant: LicenseGrant | null;
   lastCode?: string | null;
   lastMessage?: string | null;
+  sessionId?: string | null;
 }
 
 export function extractAppId(value: string): string {
@@ -62,9 +63,11 @@ export function normalizeDisplayName(value: unknown): string {
 export function licenseMessage(code: string | undefined | null, fallback?: string): string {
   switch (code) {
     case "no_license":
-      return "Choose a plan and pay for 1, 6, or 12 months to activate this PC.";
+      return "Choose a plan and pay for 1, 6, or 12 months to start your subscription.";
     case "expired":
-      return "License has expired. Pay again to add another term.";
+      return "Your subscription has expired. Pay for a plan to extend it.";
+    case "session_replaced":
+      return "This account signed in on another device.";
     case "revoked":
       return "License has been revoked.";
     case "unauthorized":

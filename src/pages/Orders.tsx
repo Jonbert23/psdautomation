@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { GarmentProfile, ProductionOrder } from "@shared/types";
+import { FolderCard, FolderGrid } from "../components/FolderCard";
 import { api, formatWhen } from "../lib/api";
 
 export function OrdersPage() {
@@ -55,43 +56,28 @@ export function OrdersPage() {
           </div>
         </div>
       ) : (
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Order</th>
-                <th>Profile</th>
-                <th>Status</th>
-                <th>Items</th>
-                <th>Updated</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {orders.map((o) => (
-                <tr key={o.id}>
-                  <td>
-                    <strong>{o.name || "Untitled"}</strong>
-                  </td>
-                  <td>{profileName(o.profileId)}</td>
-                  <td>{o.status}</td>
-                  <td>{o.items.length}</td>
-                  <td className="muted">{formatWhen(o.updatedAt)}</td>
-                  <td>
-                    <div className="row-actions">
-                      <button className="btn" onClick={() => navigate(`/orders/${o.id}`)}>
-                        Open
-                      </button>
-                      <button className="btn danger" onClick={() => remove(o.id)}>
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <FolderGrid>
+          {orders.map((o) => (
+            <FolderCard
+              key={o.id}
+              name={o.name || "Untitled"}
+              detail={`${profileName(o.profileId)} · ${o.items.length} item${o.items.length === 1 ? "" : "s"}`}
+              status={o.status}
+              updated={formatWhen(o.updatedAt)}
+              onOpen={() => navigate(`/orders/${o.id}`)}
+              actions={
+                <>
+                  <button className="btn" onClick={() => navigate(`/orders/${o.id}`)}>
+                    Open
+                  </button>
+                  <button className="btn danger" onClick={() => remove(o.id)}>
+                    Delete
+                  </button>
+                </>
+              }
+            />
+          ))}
+        </FolderGrid>
       )}
     </>
   );

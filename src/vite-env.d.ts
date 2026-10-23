@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 
-import type { DashboardStats, ActivityEvent, Category, GarmentProfile, ProductionOrder, AutomationJob, AppSettings } from "@shared/types";
+import type { DashboardStats, ActivityEvent, Category, GarmentProfile, ProductionOrder, AutomationJob, AppSettings, PublicCatalogProfile } from "@shared/types";
 import type { TemplateSkip } from "@shared/templateSpec";
 import type { AuthStatus, UserProfile } from "@shared/licenseGrant";
 import type { BillingSnapshot, Plan } from "@shared/plans";
@@ -34,6 +34,10 @@ export interface DesktopApi {
     archive: (id: string) => Promise<GarmentProfile>;
     restore: (id: string) => Promise<GarmentProfile>;
     delete: (id: string) => Promise<void>;
+  };
+  catalog: {
+    list: () => Promise<PublicCatalogProfile[]>;
+    download: (profile: PublicCatalogProfile) => Promise<GarmentProfile>;
   };
   orders: {
     list: () => Promise<ProductionOrder[]>;

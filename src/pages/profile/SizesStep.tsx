@@ -1,7 +1,8 @@
 import type { GarmentProfile, SizeDefinition } from "@shared/types";
 import { STARTER_SIZE_LABELS } from "@shared/starters";
 import { createId } from "@shared/ids";
-import { moveItem, newSize } from "../../lib/profileFactories";
+import { newSize } from "../../lib/profileFactories";
+import { ReorderHandle, useRowReorder } from "../../components/ReorderHandle";
 
 export function SizesStep({
   profile,
@@ -11,6 +12,7 @@ export function SizesStep({
   onChange: (patch: Partial<GarmentProfile>) => void;
 }) {
   const sizes = [...profile.sizes].sort((a, b) => a.sortOrder - b.sortOrder);
+  const reorder = useRowReorder(sizes, (next: SizeDefinition[]) => setSizes(next));
 
   function setSizes(next: SizeDefinition[], assignments = profile.presetAssignments) {
     onChange({ sizes: next.map((s, i) => ({ ...s, sortOrder: i })), presetAssignments: assignments });
@@ -64,6 +66,7 @@ export function SizesStep({
           <table>
             <thead>
               <tr>
+                <th />
                 <th>Label</th>
                 <th>Description</th>
                 <th>On</th>
@@ -72,7 +75,10 @@ export function SizesStep({
             </thead>
             <tbody>
               {sizes.map((size, index) => (
-                <tr key={size.id}>
+                <tr key={size.id} {...reorder.rowProps(index)}>
+                  <td>
+                    <ReorderHandle label={`Drag ${size.label || "size"}`} {...reorder.handleProps(index)} />
+                  </td>
                   <td>
                     <input
                       className="input"
@@ -97,16 +103,6 @@ export function SizesStep({
                   </td>
                   <td>
                     <div className="row-actions">
-                      <button className="btn" disabled={index === 0} onClick={() => setSizes(moveItem(sizes, index, -1))}>
-                        Up
-                      </button>
-                      <button
-                        className="btn"
-                        disabled={index === sizes.length - 1}
-                        onClick={() => setSizes(moveItem(sizes, index, 1))}
-                      >
-                        Down
-                      </button>
                       <button className="btn" onClick={() => duplicate(size)}>
                         Duplicate
                       </button>
