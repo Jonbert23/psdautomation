@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Trash2 } from "lucide-react";
 import type { Category, GarmentProfile } from "@shared/types";
 import { templateGuideReady } from "@shared/steps";
+import { FilterTabs } from "../components/FilterTabs";
 import { FolderCard, FolderGrid } from "../components/FolderCard";
-import { api, formatWhen } from "../lib/api";
+import { PageHeader } from "../components/PageHeader";
+import { api } from "../lib/api";
 
 export function ProfilesPage() {
   const navigate = useNavigate();
@@ -11,7 +14,6 @@ export function ProfilesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
-  const [status, setStatus] = useState("active");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [guideBusyId, setGuideBusyId] = useState<string | null>(null);
@@ -28,23 +30,11 @@ export function ProfilesPage() {
 
   const filtered = useMemo(() => {
     return profiles.filter((p) => {
-      if (status !== "all" && p.status !== status) return false;
       if (category !== "all" && p.categoryId !== category) return false;
       const hay = `${p.name} ${p.description}`.toLowerCase();
       return hay.includes(query.toLowerCase());
     });
-  }, [profiles, query, category, status]);
-
-  async function onDuplicate(id: string) {
-    await api().profiles.duplicate(id);
-    await refresh();
-  }
-
-  async function onArchive(id: string, archived: boolean) {
-    if (archived) await api().profiles.restore(id);
-    else await api().profiles.archive(id);
-    await refresh();
-  }
+  }, [profiles, query, category]);
 
   async function onDelete(id: string) {
     if (!confirm("Delete this garment profile permanently?")) return;
@@ -76,33 +66,29 @@ export function ProfilesPage() {
 
   return (
     <>
+      <PageHeader
+        title="Layouts"
+        description="Reusable garment layouts — parts, sizes, presets, and fields."
+      />
       {error && <div className="error-banner">{error}</div>}
       {notice && <div className="ok-banner">{notice}</div>}
       <div className="toolbar">
-        <input className="search" placeholder="Search profiles" value={query} onChange={(e) => setQuery(e.target.value)} />
-        <select className="select" value={category} onChange={(e) => setCategory(e.target.value)} style={{ maxWidth: 220 }}>
-          <option value="all">All categories</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-        <select className="select" value={status} onChange={(e) => setStatus(e.target.value)} style={{ maxWidth: 160 }}>
-          <option value="active">Active</option>
-          <option value="archived">Archived</option>
-          <option value="all">All statuses</option>
-        </select>
+        <input className="search" placeholder="Search layouts" value={query} onChange={(e) => setQuery(e.target.value)} />
         <button className="btn primary" onClick={() => navigate("/profiles/new")}>
-          New profile
+          New layout
         </button>
       </div>
+      <FilterTabs
+        value={category}
+        onChange={setCategory}
+        items={[{ id: "all", label: "All" }, ...categories.map((c) => ({ id: c.id, label: c.name }))]}
+      />
       {filtered.length === 0 ? (
         <div className="empty">
-          No garment profiles match these filters.
+          No layouts match these filters.
           <div style={{ marginTop: 10 }}>
             <button className="btn primary" onClick={() => navigate("/profiles/new")}>
-              Create a profile
+              Create a layout
             </button>
           </div>
         </div>
@@ -113,19 +99,12 @@ export function ProfilesPage() {
               key={p.id}
               name={p.name || "Untitled"}
               detail={`${catName(p.categoryId)} · ${p.parts.length} parts · ${p.sizes.length} sizes · ${p.attributes.length} fields`}
-              status={p.status}
-              updated={formatWhen(p.updatedAt)}
               onOpen={() => navigate(`/profiles/${p.id}`)}
-              actions={
+              inside={
                 <>
-                  <button className="btn" onClick={() => navigate(`/profiles/${p.id}`)}>
-                    Edit
-                  </button>
-                  <button className="btn" onClick={() => onDuplicate(p.id)}>
-                    Duplicate
-                  </button>
                   <button
-                    className="btn"
+                    className="btn primary"
+                    type="button"
                     disabled={guideBusyId !== null || !templateGuideReady(p)}
                     title={
                       templateGuideReady(p)
@@ -136,11 +115,8 @@ export function ProfilesPage() {
                   >
                     {guideBusyId === p.id ? "Generating…" : "Template Guide"}
                   </button>
-                  <button className="btn" onClick={() => onArchive(p.id, p.status === "archived")}>
-                    {p.status === "archived" ? "Restore" : "Archive"}
-                  </button>
-                  <button className="btn danger" onClick={() => onDelete(p.id)}>
-                    Delete
+                  <button className="btn icon-btn" type="button" aria-label="Delete" onClick={() => onDelete(p.id)}>
+                    <Trash2 size={14} />
                   </button>
                 </>
               }

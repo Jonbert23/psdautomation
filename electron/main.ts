@@ -114,21 +114,6 @@ function registerIpc() {
     profileSync.syncOne(saved.id);
     return saved;
   });
-  ipcMain.handle("profiles:duplicate", (_e, id: string) => {
-    const saved = store.duplicateProfile(id);
-    profileSync.syncOne(saved.id);
-    return saved;
-  });
-  ipcMain.handle("profiles:archive", (_e, id: string) => {
-    const saved = store.setProfileStatus(id, "archived");
-    profileSync.syncOne(saved.id);
-    return saved;
-  });
-  ipcMain.handle("profiles:restore", (_e, id: string) => {
-    const saved = store.setProfileStatus(id, "active");
-    profileSync.syncOne(saved.id);
-    return saved;
-  });
   ipcMain.handle("profiles:delete", (_e, id: string) => {
     const existing = store.getProfile(id);
     store.deleteProfile(id);

@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useState } from "react";
+import { PageHeader } from "../components/PageHeader";
 import { api } from "../lib/api";
 import { PlanPicker } from "../components/PlanPicker";
 import { useLicense } from "../lib/LicenseContext";
@@ -52,6 +53,7 @@ export function UserProfilePage() {
 
   return (
     <>
+      <PageHeader title="Account" description="Your name, plan, and license." />
       {error ? <div className="error-banner">{error}</div> : null}
       {message ? <div className="ok-banner">{message}</div> : null}
       <section className="card">

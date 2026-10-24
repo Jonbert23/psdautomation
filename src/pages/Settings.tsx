@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { AppSettings, Category } from "@shared/types";
 import { api } from "../lib/api";
+import { PageHeader } from "../components/PageHeader";
 import { useLicense } from "../lib/LicenseContext";
 
 export function SettingsPage() {
@@ -82,6 +83,10 @@ export function SettingsPage() {
 
   return (
     <>
+      <PageHeader
+        title="Settings"
+        description="Photoshop path, categories, and workspace options."
+      />
       {error && <div className="error-banner">{error}</div>}
       {message && <div className="ok-banner">{message}</div>}
       <section className="card">

@@ -11,9 +11,6 @@ contextBridge.exposeInMainWorld("api", {
     list: () => ipcRenderer.invoke("profiles:list"),
     get: (id: string) => ipcRenderer.invoke("profiles:get", id),
     save: (profile: unknown) => ipcRenderer.invoke("profiles:save", profile),
-    duplicate: (id: string) => ipcRenderer.invoke("profiles:duplicate", id),
-    archive: (id: string) => ipcRenderer.invoke("profiles:archive", id),
-    restore: (id: string) => ipcRenderer.invoke("profiles:restore", id),
     delete: (id: string) => ipcRenderer.invoke("profiles:delete", id),
   },
   catalog: {

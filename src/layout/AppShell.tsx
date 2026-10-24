@@ -1,8 +1,7 @@
 import type { CSSProperties } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { ClipboardList, Folder, Home, Play, Settings } from "lucide-react";
+import { Bell, Home, Play, Scissors, Settings } from "lucide-react";
 import { AccountMenu } from "../components/AccountMenu";
-import { useLicenseStatus } from "../lib/LicenseContext";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Sidebar,
@@ -20,23 +19,12 @@ import {
 
 const WORK = [
   { to: "/", label: "Home", icon: Home },
-  { to: "/profiles", label: "Profiles", icon: Folder },
-  { to: "/orders", label: "Orders", icon: ClipboardList },
-  { to: "/jobs", label: "Jobs", icon: Play },
+  { to: "/profiles", label: "Layouts", icon: Scissors },
+  { to: "/orders", label: "Automation", icon: Play },
+  { to: "/jobs", label: "Notification", icon: Bell },
 ];
 
 const ACCOUNT = [{ to: "/settings", label: "Settings", icon: Settings }];
-
-const TITLES: Record<string, string> = {
-  "/": "Home",
-  "/profiles": "Garment profiles",
-  "/profiles/new": "New garment profile",
-  "/orders": "Production orders",
-  "/orders/new": "New production order",
-  "/jobs": "Automation jobs",
-  "/profile": "Account",
-  "/settings": "Settings",
-};
 
 function onPath(pathname: string, to: string) {
   if (to === "/") return pathname === "/";
@@ -69,15 +57,6 @@ function NavItems({ items }: { items: typeof WORK }) {
 
 export function AppShell() {
   const location = useLocation();
-  const license = useLicenseStatus();
-  const title =
-    TITLES[location.pathname] ??
-    (location.pathname.startsWith("/profiles/")
-      ? "Edit garment profile"
-      : location.pathname.startsWith("/orders/")
-        ? "Edit production order"
-        : "SHUZEE");
-  const expiryLabel = license.expiresAt ? new Date(license.expiresAt).toLocaleDateString() : null;
 
   return (
     <SidebarProvider className="h-svh overflow-hidden" style={{ "--sidebar-width": "76px" } as CSSProperties}>
@@ -109,20 +88,6 @@ export function AppShell() {
         </SidebarFooter>
       </Sidebar>
       <SidebarInset className="main min-h-0 min-w-0">
-        <header className="topbar">
-          <h2>{title}</h2>
-          <div className="grow" />
-          <div className="license-chip" title={license.email || undefined}>
-            {license.usable ? (
-              <>
-                <span>{license.planName || "Licensed"}</span>
-                {expiryLabel ? <span className="muted">Renew Date {expiryLabel}</span> : null}
-              </>
-            ) : (
-              <span>{license.signedIn ? "License required" : "Sign in required"}</span>
-            )}
-          </div>
-        </header>
         <div className="content">
           <Outlet />
         </div>

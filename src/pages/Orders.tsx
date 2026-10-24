@@ -1,19 +1,26 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import type { GarmentProfile, ProductionOrder } from "@shared/types";
+import { Trash2 } from "lucide-react";
+import type { Category, GarmentProfile, ProductionOrder } from "@shared/types";
+import { FilterTabs } from "../components/FilterTabs";
 import { FolderCard, FolderGrid } from "../components/FolderCard";
-import { api, formatWhen } from "../lib/api";
+import { PageHeader } from "../components/PageHeader";
+import { api } from "../lib/api";
 
 export function OrdersPage() {
   const navigate = useNavigate();
   const [orders, setOrders] = useState<ProductionOrder[]>([]);
   const [profiles, setProfiles] = useState<GarmentProfile[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [category, setCategory] = useState("all");
+  const [query, setQuery] = useState("");
   const [error, setError] = useState("");
 
   async function refresh() {
-    const [o, p] = await Promise.all([api().orders.list(), api().profiles.list()]);
+    const [o, p, c] = await Promise.all([api().orders.list(), api().profiles.list(), api().categories.list()]);
     setOrders(o);
     setProfiles(p.filter((x) => x.status === "active"));
+    setCategories(c);
   }
 
   useEffect(() => {
@@ -21,6 +28,14 @@ export function OrdersPage() {
   }, []);
 
   const profileName = (id: string) => profiles.find((p) => p.id === id)?.name || id;
+  const filtered = useMemo(() => {
+    const needle = query.toLowerCase();
+    return orders.filter((o) => {
+      if (category !== "all" && profiles.find((p) => p.id === o.profileId)?.categoryId !== category) return false;
+      const hay = `${o.name} ${profileName(o.profileId)} ${o.status}`.toLowerCase();
+      return hay.includes(needle);
+    });
+  }, [orders, profiles, category, query]);
 
   async function remove(id: string) {
     if (!confirm("Delete this order?")) return;
@@ -30,48 +45,54 @@ export function OrdersPage() {
 
   return (
     <>
+      <PageHeader
+        title="Automation"
+        description="Run a layout against a design file and export the batch."
+      />
       {error && <div className="error-banner">{error}</div>}
-      <p className="page-lead">
-        Create an order from a garment profile, then choose the design PSD, output folder, save formats, and file
-        naming for that batch.
-      </p>
       <div className="toolbar">
+        <input className="search" placeholder="Search automations" value={query} onChange={(e) => setQuery(e.target.value)} />
         <button className="btn primary" disabled={profiles.length === 0} onClick={() => navigate("/orders/new")}>
-          New order
+          New automation
         </button>
-        {profiles.length === 0 && <span className="muted">Create a garment profile before adding an order.</span>}
+        {profiles.length === 0 && <span className="muted">Create a layout before adding an automation.</span>}
       </div>
+      <FilterTabs
+        value={category}
+        onChange={setCategory}
+        items={[{ id: "all", label: "All" }, ...categories.map((c) => ({ id: c.id, label: c.name }))]}
+      />
       {profiles.length > 0 && (
         <p className="muted">
-          Profiles available: {profiles.map((p) => p.name || "Untitled").join(", ")}
+          Layouts available: {profiles.map((p) => p.name || "Untitled").join(", ")}
         </p>
       )}
       {orders.length === 0 ? (
         <div className="empty">
-          No production orders yet.
+          No automations yet.
           <div style={{ marginTop: 10 }}>
             <button className="btn primary" disabled={profiles.length === 0} onClick={() => navigate("/orders/new")}>
-              Create order from a profile
+              Create automation from a layout
             </button>
           </div>
         </div>
+      ) : filtered.length === 0 ? (
+        <div className="empty">No automations match these filters.</div>
       ) : (
         <FolderGrid>
-          {orders.map((o) => (
+          {filtered.map((o) => (
             <FolderCard
               key={o.id}
               name={o.name || "Untitled"}
-              detail={`${profileName(o.profileId)} · ${o.items.length} item${o.items.length === 1 ? "" : "s"}`}
-              status={o.status}
-              updated={formatWhen(o.updatedAt)}
+              detail={`${profileName(o.profileId)} · ${o.items.length} item${o.items.length === 1 ? "" : "s"} · ${o.status}`}
               onOpen={() => navigate(`/orders/${o.id}`)}
-              actions={
+              inside={
                 <>
-                  <button className="btn" onClick={() => navigate(`/orders/${o.id}`)}>
+                  <button className="btn primary" type="button" onClick={() => navigate(`/orders/${o.id}`)}>
                     Open
                   </button>
-                  <button className="btn danger" onClick={() => remove(o.id)}>
-                    Delete
+                  <button className="btn icon-btn" type="button" aria-label="Delete" onClick={() => remove(o.id)}>
+                    <Trash2 size={14} />
                   </button>
                 </>
               }

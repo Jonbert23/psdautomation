@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import type { Category, GarmentProfile } from "@shared/types";
 import { emptyProfile } from "@shared/defaults";
 import { PROFILE_STEPS, type ProfileStepId, presetCoverage, profileReuseReady, stepStates } from "@shared/steps";
+import { PageHeader } from "../components/PageHeader";
 import { api } from "../lib/api";
 import { IdentityStep } from "./profile/IdentityStep";
 import { PartsStep } from "./profile/PartsStep";
@@ -88,6 +89,10 @@ export function ProfileEditorPage() {
         ))}
       </nav>
       <div className={step === "layout" ? "editor-main layout-fill" : "editor-main"}>
+        <PageHeader
+          title={id ? "Edit layout" : "New layout"}
+          description="Name the garment type and set parts, sizes, presets, and fields."
+        />
         {error && <div className="error-banner">{error}</div>}
         {notice && <div className="ok-banner">{notice}</div>}
         {step === "identity" && <IdentityStep profile={profile} categories={categories} onChange={patch} />}

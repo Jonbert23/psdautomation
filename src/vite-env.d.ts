@@ -30,9 +30,6 @@ export interface DesktopApi {
     list: () => Promise<GarmentProfile[]>;
     get: (id: string) => Promise<GarmentProfile | null>;
     save: (profile: Partial<GarmentProfile>) => Promise<GarmentProfile>;
-    duplicate: (id: string) => Promise<GarmentProfile>;
-    archive: (id: string) => Promise<GarmentProfile>;
-    restore: (id: string) => Promise<GarmentProfile>;
     delete: (id: string) => Promise<void>;
   };
   catalog: {

@@ -4,6 +4,7 @@ import type { GarmentProfile, OrderItem, ProductionOrder } from "@shared/types";
 import { createId } from "@shared/ids";
 import { emptyOrder, emptyOrderItem, normalizeOrder } from "@shared/orders";
 import { profileReadyForAutomation, validateOrder } from "@shared/validation";
+import { PageHeader } from "../components/PageHeader";
 import { api } from "../lib/api";
 
 export function OrderEditorPage() {
@@ -151,9 +152,13 @@ export function OrderEditorPage() {
   if (!order) {
     return (
       <>
+        <PageHeader
+          title={id ? "Edit automation" : "New automation"}
+          description="Pick a layout, design file, and output for this batch."
+        />
         {error && <div className="error-banner">{error}</div>}
         <button className="btn" onClick={() => navigate("/profiles/new")}>
-          Create a garment profile
+          Create a layout
         </button>
       </>
     );
@@ -165,12 +170,12 @@ export function OrderEditorPage() {
 
   return (
     <>
+      <PageHeader
+        title={id ? "Edit automation" : "New automation"}
+        description="Pick a layout, design file, and output for this batch."
+      />
       {error && <div className="error-banner">{error}</div>}
       {notice && <div className="ok-banner">{notice}</div>}
-      <p className="page-lead">
-        Pick the garment profile, then the design file, output folder, and save formats for this batch. Rows use
-        that profile’s fields. Photoshop must be installed to run.
-      </p>
       <section className="card">
         <h3>This run</h3>
         <div className="card-body form-grid">

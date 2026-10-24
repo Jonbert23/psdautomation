@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { AutomationJob } from "@shared/types";
+import { PageHeader } from "../components/PageHeader";
 import { api } from "../lib/api";
 
 export function JobsPage() {
@@ -15,13 +16,13 @@ export function JobsPage() {
 
   return (
     <>
+      <PageHeader
+        title="Notification"
+        description="Status of automation runs from Photoshop."
+      />
       {error && <div className="error-banner">{error}</div>}
-      <p className="page-lead">
-        Jobs are created when you click Run automation on an order. A job is completed only if Photoshop writes
-        result.json.
-      </p>
       {jobs.length === 0 ? (
-        <div className="empty">No automation jobs yet. Open a production order and click Run automation.</div>
+        <div className="empty">No automation runs yet. Open an automation and click Run automation.</div>
       ) : (
         <ul className="job-list">
           {jobs.map((j) => (

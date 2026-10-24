@@ -142,34 +142,6 @@ export class WorkspaceStore {
     return profile;
   }
 
-  duplicateProfile(id: string): GarmentProfile {
-    const source = this.getProfile(id);
-    if (!source) throw new Error("Profile not found.");
-    const copy = emptyProfile({
-      ...JSON.parse(JSON.stringify(source)) as GarmentProfile,
-      id: createId("prf"),
-      name: `${source.name} copy`,
-      status: "active",
-      catalogImport: false,
-      createdAt: nowIso(),
-      updatedAt: nowIso(),
-    });
-    this.data.profiles.unshift(copy);
-    this.log("profile", `Duplicated profile "${source.name}"`, copy.id);
-    this.persist();
-    return copy;
-  }
-
-  setProfileStatus(id: string, status: "active" | "archived") {
-    const profile = this.getProfile(id);
-    if (!profile) throw new Error("Profile not found.");
-    profile.status = status;
-    profile.updatedAt = nowIso();
-    this.log("profile", `${status === "archived" ? "Archived" : "Restored"} "${profile.name}"`, id);
-    this.persist();
-    return profile;
-  }
-
   deleteProfile(id: string) {
     const profile = this.getProfile(id);
     if (!profile) throw new Error("Profile not found.");

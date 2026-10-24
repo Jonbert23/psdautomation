@@ -186,11 +186,125 @@ button {
    TYPOGRAPHY UTILITIES
    ============================================================ */
 
+.page-header {
+  margin: 0 0 20px;
+  max-width: 680px;
+}
+
+.page-header h1 {
+  margin: 0 0 6px;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.page-header p {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
 .page-lead {
   color: var(--text-secondary);
   margin: 0 0 20px;
   line-height: 1.6;
   max-width: 680px;
+}
+
+.welcome-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  margin: 0 0 16px;
+  padding: 28px 32px;
+  background: hsl(var(--sidebar-background));
+  color: hsl(var(--sidebar-foreground));
+  box-shadow: var(--shadow);
+  border-radius: 0;
+  overflow: hidden;
+}
+
+.welcome-copy {
+  min-width: 0;
+  max-width: 640px;
+}
+
+.welcome-banner h2 {
+  margin: 0 0 8px;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  color: hsl(var(--sidebar-foreground));
+}
+
+.welcome-banner p {
+  margin: 0 0 18px;
+  max-width: 520px;
+  color: hsl(var(--sidebar-foreground));
+  opacity: 0.82;
+  line-height: 1.5;
+}
+
+.welcome-start {
+  height: 36px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 0;
+  background: hsl(var(--sidebar-primary));
+  color: hsl(var(--sidebar-primary-foreground));
+  font-weight: 600;
+  box-shadow: var(--shadow);
+}
+
+.welcome-start:hover {
+  background: hsl(var(--sidebar-foreground));
+  color: hsl(var(--sidebar-primary-foreground));
+}
+
+.welcome-art {
+  position: relative;
+  width: 220px;
+  height: 132px;
+  flex: none;
+}
+
+.welcome-art .shape {
+  position: absolute;
+  display: block;
+  background: hsl(var(--sidebar-accent));
+}
+
+.welcome-art .tall {
+  width: 64px;
+  height: 112px;
+  right: 86px;
+  bottom: 0;
+}
+
+.welcome-art .wide {
+  width: 52px;
+  height: 78px;
+  right: 22px;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.welcome-art .slim {
+  width: 28px;
+  height: 96px;
+  right: 0;
+  bottom: 12px;
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.welcome-art .small {
+  width: 40px;
+  height: 40px;
+  right: 156px;
+  bottom: 16px;
 }
 
 .muted {
@@ -368,6 +482,28 @@ button {
   gap: 8px;
   align-items: center;
   margin-bottom: 12px;
+}
+
+.filter-tabs {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  margin: 0 0 16px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 2px;
+}
+
+.filter-tabs .btn {
+  flex: none;
+}
+
+.filter-tabs::-webkit-scrollbar {
+  height: 6px;
+}
+
+.filter-tabs::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.18);
 }
 
 /* ============================================================
@@ -566,6 +702,53 @@ tr.reorder-target {
   flex-wrap: wrap;
 }
 
+.public-profiles,
+.home-section {
+  margin-bottom: 16px;
+}
+
+.public-profiles h3,
+.home-section h3 {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.attention-list {
+  margin: 0;
+  padding: 0;
+}
+
+.attention-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  list-style: none;
+  padding: 10px 0;
+  font-size: 13px;
+}
+
+.attention-list .when {
+  color: var(--text-secondary);
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.attention-job {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+
 .folder-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -580,6 +763,10 @@ tr.reorder-target {
   min-width: 0;
 }
 
+.folder-silhouette {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.05)) drop-shadow(0 8px 20px rgba(0, 0, 0, 0.06));
+}
+
 .folder-face {
   position: relative;
   display: flex;
@@ -587,39 +774,77 @@ tr.reorder-target {
   align-items: flex-start;
   gap: 6px;
   width: 100%;
-  min-height: 124px;
-  margin-top: 8px;
-  padding: 16px 14px 12px;
+  min-height: 146px;
+  padding: 38px 14px 12px;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  background: #fff;
+  border: 0;
+  border-radius: 0;
+  clip-path: polygon(
+    0 8px,
+    10px 0,
+    82px 0,
+    104px 22px,
+    100% 22px,
+    100% 100%,
+    0 100%
+  );
+}
+
+.folder-open {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
   text-align: left;
   font: inherit;
   color: inherit;
   cursor: pointer;
-  background: #fff;
-  border: 0;
-  box-shadow: var(--shadow);
-  border-radius: 0;
+}
+
+.folder-inside {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  width: 100%;
+  margin-top: auto;
+}
+
+.folder-inside .btn {
+  height: 28px;
+  padding: 0 8px;
+  font-size: 12px;
+}
+
+.folder-inside .btn.icon-btn {
+  width: 28px;
+  padding: 0;
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.folder-inside .btn.icon-btn:hover {
+  background: var(--line);
 }
 
 .folder-face:hover {
   background: #fafafa;
 }
 
-.folder-tab {
-  position: absolute;
-  top: -8px;
-  left: -1px;
-  width: 76px;
-  height: 8px;
-  background: #fff;
-  border: 0;
-  box-shadow: var(--shadow);
-  border-radius: 0;
-}
-
 .folder-name {
   font-size: 14px;
   font-weight: 600;
   letter-spacing: -0.01em;
+  text-transform: capitalize;
 }
 
 .folder-detail {
@@ -748,13 +973,6 @@ tr.reorder-target {
   margin-top: 2px;
 }
 
-.catalog-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
 /* ============================================================
    LICENSE CHIP  (top bar)
    ============================================================ */
@@ -845,6 +1063,10 @@ tr.reorder-target {
   min-height: 0;
   padding: 20px 24px;
   background: var(--bg);
+}
+
+.editor-main .page-header {
+  flex-shrink: 0;
 }
 
 .editor-main.layout-fill {
@@ -1109,6 +1331,18 @@ tr.reorder-target {
 /* ============================================================
    RESPONSIVE
    ============================================================ */
+
+@media (max-width: 900px) {
+  .welcome-banner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .welcome-art {
+    width: 100%;
+    height: 96px;
+  }
+}
 
 @media (max-width: 1200px) {
   .stats {
