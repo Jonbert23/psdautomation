@@ -84,7 +84,7 @@ export function AccountMenu({ active }: { active: boolean }) {
         isActive={active || cardOpen}
         aria-label="Account"
         aria-expanded={cardOpen}
-        className="mx-auto size-11 justify-center gap-0 rounded-lg p-0"
+        className="mx-auto size-11 justify-center gap-0 rounded-lg bg-transparent p-0 shadow-none hover:bg-sidebar-accent data-[active=true]:bg-transparent"
         onMouseEnter={showCard}
         onMouseLeave={hideCard}
         onFocus={showCard}
