@@ -9,14 +9,17 @@ The original Photoshop scripts still work unchanged:
 
 ## Start here
 
-1. Read [docs/AUDIT.md](docs/AUDIT.md) for how the existing JSX works.
-2. Read [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) for architecture.
-3. Follow [docs/SETUP.md](docs/SETUP.md) to run the desktop app.
+On another Windows PC, follow [docs/SETUP.md](docs/SETUP.md):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\setup.ps1
+npm run dev
+```
+
+On a PC that already has Node.js 20 and `desktop/.env`:
 
 ```
 npm install
 npm test
 npm run dev
 ```
-
-Phase 2 is the application foundation (dashboard, persistence, profile metadata, settings). Parts / sizes / attributes / orders / JSX engine follow in later phases.
