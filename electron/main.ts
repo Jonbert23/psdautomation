@@ -1,5 +1,6 @@
-import { app, BrowserWindow, dialog, ipcMain, Notification } from "electron";
+import { app, BrowserWindow, dialog, ipcMain, net, Notification, protocol } from "electron";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { WorkspaceStore } from "./store";
 import { detectPhotoshop } from "./photoshop";
 import { runOrder } from "./runner";
@@ -13,11 +14,20 @@ import { startBillingWindow } from "./billing";
 import { PLANS } from "../shared/plans";
 import type { GarmentProfile, ProductionOrder, PublicCatalogProfile } from "../shared/types";
 import { ProfileSync } from "./profileSync";
+import { SupportVideos } from "./supportVideos";
 import type { AuthStatus } from "../shared/licenseGrant";
+
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: "app-video",
+    privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true, corsEnabled: true },
+  },
+]);
 
 let store: WorkspaceStore;
 let license: LicenseService;
 let profileSync: ProfileSync;
+let supportVideos: SupportVideos;
 let mainWindow: BrowserWindow | null = null;
 
 function notifyAuthChanged(status: AuthStatus) {
@@ -124,6 +134,10 @@ function registerIpc() {
   });
   ipcMain.handle("catalog:list", () => profileSync.listPublic());
   ipcMain.handle("catalog:download", (_e, profile: PublicCatalogProfile) => profileSync.download(profile));
+  ipcMain.handle("support:list", () => supportVideos.list());
+  ipcMain.handle("support:download", (_e, tutorial: { id: string; title?: string; description?: string; fileName?: string; videoUrl?: string }) =>
+    supportVideos.download(tutorial),
+  );
 
   ipcMain.handle("orders:list", () => store.listOrders());
   ipcMain.handle("orders:get", (_e, id: string) => store.getOrder(id));
@@ -243,6 +257,17 @@ app.whenReady().then(() => {
   store = new WorkspaceStore(userData);
   license = new LicenseService(new LicenseStore(userData));
   profileSync = new ProfileSync(store, license, userData);
+  supportVideos = new SupportVideos(userData, license);
+  protocol.handle("app-video", (request) => {
+    try {
+      const id = decodeURIComponent(new URL(request.url).pathname.replace(/^\/+/, ""));
+      const filePath = supportVideos.fileFor(id);
+      if (!filePath) return new Response("Not found", { status: 404 });
+      return net.fetch(pathToFileURL(filePath).href, { method: request.method, headers: request.headers });
+    } catch {
+      return new Response("Not found", { status: 404 });
+    }
+  });
   registerIpc();
   void profileSync.syncPending();
   setInterval(() => {

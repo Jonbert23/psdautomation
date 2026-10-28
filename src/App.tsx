@@ -8,6 +8,7 @@ import { ProfileEditorPage } from "./pages/ProfileEditor";
 import { OrdersPage } from "./pages/Orders";
 import { OrderEditorPage } from "./pages/OrderEditor";
 import { JobsPage } from "./pages/Jobs";
+import { SupportPage } from "./pages/Support";
 import { SettingsPage } from "./pages/Settings";
 import { UserProfilePage } from "./pages/UserProfile";
 import App1Demo from "./pages/App1Demo";
@@ -27,6 +28,7 @@ export default function App() {
             <Route path="/orders/new" element={<OrderEditorPage />} />
             <Route path="/orders/:id" element={<OrderEditorPage />} />
             <Route path="/jobs" element={<JobsPage />} />
+            <Route path="/support" element={<SupportPage />} />
             <Route path="/profile" element={<UserProfilePage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />

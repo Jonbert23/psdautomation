@@ -36,6 +36,20 @@ export interface DesktopApi {
     list: () => Promise<PublicCatalogProfile[]>;
     download: (profile: PublicCatalogProfile) => Promise<GarmentProfile>;
   };
+  support: {
+    list: () => Promise<{
+      tutorials: { id: string; title: string; description: string; fileName: string; videoUrl: string; downloaded: boolean }[];
+      offline: boolean;
+    }>;
+    download: (tutorial: { id: string; title: string; description: string; fileName: string; videoUrl: string }) => Promise<{
+      id: string;
+      title: string;
+      description: string;
+      fileName: string;
+      videoUrl: string;
+      downloaded: boolean;
+    }>;
+  };
   orders: {
     list: () => Promise<ProductionOrder[]>;
     get: (id: string) => Promise<ProductionOrder | null>;

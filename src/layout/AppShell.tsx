@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { Bell, Home, Play, Scissors, Settings } from "lucide-react";
+import { Bell, CircleHelp, Home, Play, Scissors, Settings } from "lucide-react";
 import { AccountMenu } from "../components/AccountMenu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
@@ -22,6 +22,7 @@ const WORK = [
   { to: "/profiles", label: "Layouts", icon: Scissors },
   { to: "/orders", label: "Automation", icon: Play },
   { to: "/jobs", label: "Notification", icon: Bell },
+  { to: "/support", label: "Support", icon: CircleHelp },
 ];
 
 const ACCOUNT = [{ to: "/settings", label: "Settings", icon: Settings }];

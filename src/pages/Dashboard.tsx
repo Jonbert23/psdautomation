@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import type { AutomationJob, PublicCatalogProfile } from "@shared/types";
+import type { PublicCatalogProfile } from "@shared/types";
 import { FilterTabs } from "../components/FilterTabs";
 import { FolderCard, FolderGrid } from "../components/FolderCard";
 import { PageHeader } from "../components/PageHeader";
@@ -16,8 +16,6 @@ export function DashboardPage() {
   const [catalogError, setCatalogError] = useState("");
   const [notice, setNotice] = useState("");
   const [busyId, setBusyId] = useState("");
-  const [jobs, setJobs] = useState<AutomationJob[]>([]);
-  const [workError, setWorkError] = useState("");
   const [catalogCategory, setCatalogCategory] = useState("all");
 
   useEffect(() => {
@@ -25,10 +23,6 @@ export function DashboardPage() {
       .dashboard()
       .then(setData)
       .catch((e: Error) => setError(e.message));
-    api()
-      .jobs.list()
-      .then(setJobs)
-      .catch((e: Error) => setWorkError(e.message));
   }, []);
 
   useEffect(() => {
@@ -92,8 +86,6 @@ export function DashboardPage() {
     return catalog.filter((profile) => (profile.categoryName || "Uncategorized") === catalogCategory);
   }, [catalog, catalogCategory]);
   const showCatalog = online && catalog.length > 0;
-  const failedJobs = jobs.filter((job) => job.status === "failed");
-  const showAttention = !data?.photoshopReady || failedJobs.length > 0;
 
   if (error) return <div className="error-banner">{error}</div>;
   if (!data) return <p className="muted">Loading workspace…</p>;
@@ -102,7 +94,7 @@ export function DashboardPage() {
     <>
       <PageHeader
         title="Home"
-        description="Your layouts, automations, and what needs attention."
+        description="Your layouts and automations."
       />
       <section className="welcome-banner" aria-label="Welcome">
         <div className="welcome-copy">
@@ -152,35 +144,6 @@ export function DashboardPage() {
             ))}
           </FolderGrid>
           )}
-        </section>
-      ) : null}
-      {workError ? <div className="error-banner">{workError}</div> : null}
-      {showAttention ? (
-        <section className="home-section">
-          <h3>Needs attention</h3>
-          <ul className="attention-list">
-            {!data.photoshopReady ? (
-              <li>
-                <div>
-                  <div>Photoshop was not found.</div>
-                  <div className="when">
-                    {data.photoshopPath || "Set a Photoshop path in Settings if auto-detect fails."}
-                  </div>
-                </div>
-                <button className="btn" type="button" onClick={() => navigate("/settings")}>
-                  Settings
-                </button>
-              </li>
-            ) : null}
-            {failedJobs.map((job) => (
-              <li key={job.id}>
-                <button className="attention-job" type="button" onClick={() => navigate("/jobs")}>
-                  <span className="badge bad">{job.status}</span>
-                  <span>{job.items.find((item) => item.error)?.error?.message || "This job failed."}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
         </section>
       ) : null}
     </>

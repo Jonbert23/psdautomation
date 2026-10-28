@@ -17,6 +17,10 @@ contextBridge.exposeInMainWorld("api", {
     list: () => ipcRenderer.invoke("catalog:list"),
     download: (profile: unknown) => ipcRenderer.invoke("catalog:download", profile),
   },
+  support: {
+    list: () => ipcRenderer.invoke("support:list"),
+    download: (tutorial: unknown) => ipcRenderer.invoke("support:download", tutorial),
+  },
   orders: {
     list: () => ipcRenderer.invoke("orders:list"),
     get: (id: string) => ipcRenderer.invoke("orders:get", id),
