@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { Bell, CircleHelp, Home, Play, Scissors, Settings } from "lucide-react";
 import { AccountMenu } from "../components/AccountMenu";
+import { UpdateBanner } from "../components/UpdateBanner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Sidebar,
@@ -90,6 +91,7 @@ export function AppShell() {
       </Sidebar>
       <SidebarInset className="main min-h-0 min-w-0">
         <div className="content">
+          <UpdateBanner />
           <Outlet />
         </div>
       </SidebarInset>

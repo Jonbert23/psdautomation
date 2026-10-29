@@ -117,7 +117,7 @@ export function buildTemplateSpec(profile: GarmentProfile, sizes: PartPixelSize[
     const box = placed.find((p) => p.partId === part.id);
     if (!box) continue;
     const seen = new Set<string>();
-    const texts: TemplateTextLayer[] = [];
+    const texts: { name: string; contents: string }[] = [];
     for (const attr of profile.attributes) {
       if (!TEXT_FIELD_TYPES.has(attr.type)) {
         if (attr.mapping?.partId === part.id) {

@@ -1,5 +1,6 @@
 /// <reference types="vite/client" />
 
+import type { AppUpdateStatus } from "@shared/appVersion";
 import type { DashboardStats, ActivityEvent, Category, GarmentProfile, ProductionOrder, AutomationJob, AppSettings, PublicCatalogProfile } from "@shared/types";
 import type { TemplateSkip } from "@shared/templateSpec";
 import type { AuthStatus, UserProfile } from "@shared/licenseGrant";
@@ -101,6 +102,10 @@ export interface DesktopApi {
   };
   template: {
     generate: (profile: GarmentProfile) => Promise<{ outputPath: string; skipped: TemplateSkip[] } | null>;
+  };
+  updates: {
+    onStatus: (callback: (status: AppUpdateStatus) => void) => () => void;
+    restart: () => Promise<void>;
   };
 }
 

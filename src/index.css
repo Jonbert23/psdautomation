@@ -679,6 +679,19 @@ tr:hover td {
   font-size: 12px;
 }
 
+.update-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  border-radius: var(--r-md);
+  background: var(--text);
+  color: var(--bg);
+  font-size: 13px;
+}
+
 /* ============================================================
    ROW ACTIONS
    ============================================================ */

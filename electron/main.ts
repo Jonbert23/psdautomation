@@ -15,6 +15,7 @@ import { PLANS } from "../shared/plans";
 import type { GarmentProfile, ProductionOrder, PublicCatalogProfile } from "../shared/types";
 import { ProfileSync } from "./profileSync";
 import { SupportVideos } from "./supportVideos";
+import { installUpdate, startAutoUpdate } from "./updates";
 import type { AuthStatus } from "../shared/licenseGrant";
 
 protocol.registerSchemesAsPrivileged([
@@ -73,6 +74,12 @@ function lockPageZoom(win: BrowserWindow) {
   });
 }
 
+function appIconPath(): string {
+  return app.isPackaged
+    ? path.join(process.resourcesPath, "icon.png")
+    : path.join(__dirname, "../build/icon.png");
+}
+
 function createWindow() {
   const win = new BrowserWindow({
     width: 1440,
@@ -80,6 +87,7 @@ function createWindow() {
     minWidth: 1100,
     minHeight: 700,
     backgroundColor: "#ecece8",
+    icon: appIconPath(),
     autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
@@ -249,6 +257,10 @@ function registerIpc() {
   ipcMain.handle("template:generate", (_e, profile: GarmentProfile) =>
     generateDesignTemplate(profile, store.getSettings().photoshopPath),
   );
+
+  ipcMain.handle("update:restart", () => {
+    installUpdate();
+  });
 }
 
 app.whenReady().then(() => {
@@ -277,6 +289,7 @@ app.whenReady().then(() => {
     .then((status) => notifyLicenseExpiry(status))
     .catch(() => {});
   createWindow();
+  startAutoUpdate(() => mainWindow);
 });
 
 app.on("window-all-closed", () => {

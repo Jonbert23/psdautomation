@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron";
+import type { AppUpdateStatus } from "../shared/appVersion";
 import type { AuthStatus } from "../shared/licenseGrant";
 
 contextBridge.exposeInMainWorld("api", {
@@ -81,5 +82,15 @@ contextBridge.exposeInMainWorld("api", {
   },
   template: {
     generate: (profile: unknown) => ipcRenderer.invoke("template:generate", profile),
+  },
+  updates: {
+    onStatus: (callback: (status: AppUpdateStatus) => void) => {
+      const listener = (_event: unknown, status: AppUpdateStatus) => callback(status);
+      ipcRenderer.on("update:status", listener);
+      return () => {
+        ipcRenderer.removeListener("update:status", listener);
+      };
+    },
+    restart: () => ipcRenderer.invoke("update:restart"),
   },
 });
