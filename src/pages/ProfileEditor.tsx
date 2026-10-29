@@ -91,7 +91,7 @@ export function ProfileEditorPage() {
       <div className={step === "layout" ? "editor-main layout-fill" : "editor-main"}>
         <PageHeader
           title={id ? "Edit layout" : "New layout"}
-          description="Name the garment type and set parts, sizes, presets, and fields."
+          description="Name the garment type and set parts, sizes, presets, and custom details."
         />
         {error && <div className="error-banner">{error}</div>}
         {notice && <div className="ok-banner">{notice}</div>}

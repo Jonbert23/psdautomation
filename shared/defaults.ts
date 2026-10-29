@@ -29,12 +29,23 @@ export function defaultExportSettings(): ExportSettings {
   };
 }
 
+export function profileCategoryIds(profile: Pick<GarmentProfile, "categoryId" | "categoryIds">): string[] {
+  const listed = Array.isArray(profile.categoryIds)
+    ? profile.categoryIds.map((id) => id.trim()).filter(Boolean)
+    : [];
+  const unique = [...new Set(listed)];
+  if (unique.length) return unique;
+  const single = profile.categoryId?.trim();
+  return single ? [single] : [];
+}
+
 export function emptyProfile(partial?: Partial<GarmentProfile>): GarmentProfile {
   const stamp = nowIso();
-  return {
+  const profile: GarmentProfile = {
     id: createId("prf"),
     name: "",
     categoryId: "custom",
+    categoryIds: ["custom"],
     description: "",
     previewImage: "",
     templatePath: "",
@@ -48,6 +59,14 @@ export function emptyProfile(partial?: Partial<GarmentProfile>): GarmentProfile 
     updatedAt: stamp,
     ...partial,
   };
+  const ids = profileCategoryIds(
+    partial?.categoryIds?.length
+      ? profile
+      : { categoryId: profile.categoryId, categoryIds: [] },
+  );
+  profile.categoryIds = ids;
+  profile.categoryId = ids[0] || "";
+  return profile;
 }
 
 export function seedCategories(): Category[] {

@@ -76,14 +76,12 @@ export function DashboardPage() {
   }
 
   const catalogTabs = useMemo(() => {
-    const names = [...new Set(catalog.map((profile) => profile.categoryName || "Uncategorized"))].sort((a, b) =>
-      a.localeCompare(b),
-    );
+    const names = [...new Set(catalog.flatMap(catalogNames))].sort((a, b) => a.localeCompare(b));
     return [{ id: "all", label: "All" }, ...names.map((name) => ({ id: name, label: name }))];
   }, [catalog]);
   const visibleCatalog = useMemo(() => {
     if (catalogCategory === "all") return catalog;
-    return catalog.filter((profile) => (profile.categoryName || "Uncategorized") === catalogCategory);
+    return catalog.filter((profile) => catalogNames(profile).includes(catalogCategory));
   }, [catalog, catalogCategory]);
   const showCatalog = online && catalog.length > 0;
 
@@ -150,8 +148,14 @@ export function DashboardPage() {
   );
 }
 
+function catalogNames(profile: PublicCatalogProfile): string[] {
+  const names = (profile.categoryNames || []).map((name) => name.trim()).filter(Boolean);
+  const unique = [...new Set(names)];
+  return unique.length ? unique : [profile.categoryName || "Uncategorized"];
+}
+
 function catalogDetail(profile: PublicCatalogProfile): string {
-  const category = profile.categoryName || "Uncategorized";
+  const category = catalogNames(profile).join(", ");
   const parts = profile.parts?.length ?? 0;
   const sizes = profile.sizes?.length ?? 0;
   const fields = profile.attributes?.length ?? 0;

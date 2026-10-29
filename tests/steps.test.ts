@@ -43,5 +43,12 @@ describe("profile steps", () => {
     expect(attached.some((a) => a.mapping?.layerName === "back_num")).toBe(true);
     expect(templateGuideReady(profile)).toBe(true);
     expect(templateGuideReady(emptyProfile())).toBe(false);
+    expect(templateGuideReady({ ...profile, attributes: [] })).toBe(true);
+    expect(
+      templateGuideReady({
+        ...profile,
+        attributes: profile.attributes.map((attr) => ({ ...attr, displayName: "" })),
+      }),
+    ).toBe(false);
   });
 });

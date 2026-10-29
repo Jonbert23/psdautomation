@@ -40,13 +40,14 @@ export function FieldsStep({
   return (
     <>
       <p className="page-lead">
-        These become columns on every order. Attach each field to a garment part so its text layer is created inside
-        that part’s group in Template Guide. Image and checkbox fields are not written as text. The order still
-        chooses the design file at run time.
+        Add the extra details you type on each order, like a player name or a jersey number. They show up as columns
+        when you fill in an order. Choose which part of the garment each one belongs to, so the words are printed on
+        the right piece. Photos and yes-or-no choices stay with the order and are not printed as words. You still
+        pick the design file later, when you run the order.
       </p>
       <div className="toolbar">
         <button className="btn primary" onClick={() => setAttrs([...attrs, newAttribute(attrs.length)])}>
-          Add field
+          Add custom
         </button>
         <button
           className="btn"
@@ -57,7 +58,7 @@ export function FieldsStep({
         </button>
       </div>
       {attrs.length === 0 ? (
-        <div className="empty">No order fields yet. Automation can still place parts if you only need sizes.</div>
+        <div className="empty">Nothing custom yet. You can still place the garment parts if you only need sizes.</div>
       ) : (
         <div className="table-wrap">
           <table>
@@ -77,7 +78,7 @@ export function FieldsStep({
               {attrs.map((attr, index) => (
                 <tr key={attr.id} {...reorder.rowProps(index)}>
                   <td>
-                    <ReorderHandle label={`Drag ${attr.displayName || "field"}`} {...reorder.handleProps(index)} />
+                    <ReorderHandle label={`Drag ${attr.displayName || "custom detail"}`} {...reorder.handleProps(index)} />
                   </td>
                   <td>
                     <input

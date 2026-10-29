@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { emptyProfile } from "../shared/defaults";
-import { buildTemplateSpec, splitLayerNames } from "../shared/templateSpec";
+import { buildTemplateSpec, splitLayerNames, TEMPLATE_FONT_SIZE } from "../shared/templateSpec";
 import type { AttributeDefinition, GarmentPart } from "../shared/types";
 
 function part(partial: Partial<GarmentPart> & { id: string; photoshopLayer: string }): GarmentPart {
@@ -73,6 +73,15 @@ describe("templateSpec", () => {
     expect(spec.groups.map((g) => g.name)).toEqual(["front", "back"]);
     expect(spec.groups[0].texts.map((t) => t.name)).toEqual(["surname", "front_num"]);
     expect(spec.groups[1].texts.map((t) => t.name)).toEqual(["back_num"]);
+    const front = spec.groups[0];
+    expect(front.texts[0].size).toBe(TEMPLATE_FONT_SIZE);
+    expect(front.texts[0].x).toBe(front.x + front.width / 2);
+    expect(front.texts[1].x).toBe(front.texts[0].x);
+    expect(front.texts[1].y).toBeGreaterThan(front.texts[0].y);
+    const back = spec.groups[1];
+    expect(back.texts[0].size).toBe(300);
+    expect(back.texts[0].x).toBe(back.x + back.width / 2);
+    expect(back.texts[0].y).toBe(back.y + back.height / 2 + 300 * 0.35);
     expect(spec.groups[0].x).toBe(0);
     expect(spec.groups[1].x).toBe(105);
     expect(spec.width).toBe(195);
@@ -108,5 +117,33 @@ describe("templateSpec", () => {
       }),
     );
     expect(spec.groups[0].texts).toHaveLength(1);
+  });
+
+  it("builds part groups when the layout has no custom details", () => {
+    const spec = buildTemplateSpec(
+      emptyProfile({
+        parts: [part({ id: "front", photoshopLayer: "front" })],
+      }),
+    );
+    expect(spec.groups).toHaveLength(1);
+    expect(spec.groups[0].name).toBe("front");
+    expect(spec.groups[0].texts).toEqual([]);
+  });
+
+  it("writes the default player name as PNAME", () => {
+    const spec = buildTemplateSpec(
+      emptyProfile({
+        parts: [part({ id: "front", photoshopLayer: "front" })],
+        attributes: [
+          attr({
+            id: "name",
+            displayName: "Name",
+            placeholder: "Player name",
+            mapping: { layerName: "surname", layerKind: "text", partId: "front" },
+          }),
+        ],
+      }),
+    );
+    expect(spec.groups[0].texts[0].contents).toBe("PNAME");
   });
 });

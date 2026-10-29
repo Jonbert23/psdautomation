@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import type { LicenseService } from "./license";
 import type { WorkspaceStore } from "./store";
-import { emptyProfile, defaultExportSettings } from "../shared/defaults";
+import { emptyProfile, defaultExportSettings, profileCategoryIds } from "../shared/defaults";
 import { createId } from "../shared/ids";
 import type { ExportSettings, GarmentProfile, PublicCatalogProfile } from "../shared/types";
 
@@ -85,7 +85,9 @@ export class ProfileSync {
       presetAssignments.push({ sizeId: preset.sizeId, partId: preset.partId, filePath });
     }
 
-    const category = this.store.ensureCategory(remote.categoryName || "Custom garment");
+    const names = (remote.categoryNames || []).map((name) => name.trim()).filter(Boolean);
+    const categoryNames = names.length ? names : [remote.categoryName || "Custom garment"];
+    const categories = categoryNames.map((name) => this.store.ensureCategory(name));
     const exportSettings: ExportSettings = {
       ...defaultExportSettings(),
       ...(remote.exportSettings || {}),
@@ -96,7 +98,8 @@ export class ProfileSync {
         id,
         name: remote.name || "Public profile",
         description: remote.description || "",
-        categoryId: category.id,
+        categoryId: categories[0]?.id || "",
+        categoryIds: categories.map((category) => category.id),
         status: remote.status === "archived" ? "archived" : "active",
         parts: remote.parts || [],
         sizes: remote.sizes || [],
@@ -112,7 +115,10 @@ export class ProfileSync {
   }
 
   private async push(profile: GarmentProfile): Promise<void> {
-    const category = this.store.listCategories().find((item) => item.id === profile.categoryId);
+    const categories = this.store.listCategories();
+    const categoryNames = profileCategoryIds(profile)
+      .map((id) => categories.find((item) => item.id === id)?.name || "")
+      .filter(Boolean);
     const presets = [];
     for (const assignment of profile.presetAssignments || []) {
       if (!assignment.filePath || !fs.existsSync(assignment.filePath)) continue;
@@ -130,7 +136,7 @@ export class ProfileSync {
         localId: profile.id,
         name: profile.name,
         description: profile.description,
-        categoryName: category?.name || "",
+        categoryName: categoryNames.join(" · "),
         status: profile.status,
         updatedAt: profile.updatedAt,
         profile: {
@@ -139,6 +145,7 @@ export class ProfileSync {
           attributes: profile.attributes,
           exportSettings,
           layoutReferenceSizeId: profile.layoutReferenceSizeId || "",
+          categoryNames,
         },
         presets,
       },

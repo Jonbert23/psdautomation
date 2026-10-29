@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Trash2 } from "lucide-react";
+import { profileCategoryIds } from "@shared/defaults";
 import type { Category, GarmentProfile } from "@shared/types";
 import { templateGuideReady } from "@shared/steps";
 import { FilterTabs } from "../components/FilterTabs";
@@ -30,7 +31,7 @@ export function ProfilesPage() {
 
   const filtered = useMemo(() => {
     return profiles.filter((p) => {
-      if (category !== "all" && p.categoryId !== category) return false;
+      if (category !== "all" && !profileCategoryIds(p).includes(category)) return false;
       const hay = `${p.name} ${p.description}`.toLowerCase();
       return hay.includes(query.toLowerCase());
     });
@@ -63,6 +64,7 @@ export function ProfilesPage() {
   }
 
   const catName = (id: string) => categories.find((c) => c.id === id)?.name ?? id;
+  const catNames = (profile: GarmentProfile) => profileCategoryIds(profile).map(catName).join(", ");
 
   return (
     <>
@@ -98,7 +100,7 @@ export function ProfilesPage() {
             <FolderCard
               key={p.id}
               name={p.name || "Untitled"}
-              detail={`${catName(p.categoryId)} · ${p.parts.length} parts · ${p.sizes.length} sizes · ${p.attributes.length} fields`}
+              detail={`${catNames(p)} · ${p.parts.length} parts · ${p.sizes.length} sizes · ${p.attributes.length} fields`}
               onOpen={() => navigate(`/profiles/${p.id}`)}
               inside={
                 <>
@@ -109,7 +111,7 @@ export function ProfilesPage() {
                     title={
                       templateGuideReady(p)
                         ? "Build a PSD with part groups and field text layers"
-                        : "Finish Parts, Sizes, Presets, Layout, and Fields first"
+                        : "Finish Parts, Sizes, Presets, and Layout first"
                     }
                     onClick={() => onTemplateGuide(p)}
                   >

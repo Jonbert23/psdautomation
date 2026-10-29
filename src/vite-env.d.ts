@@ -38,7 +38,7 @@ export interface DesktopApi {
   };
   support: {
     list: () => Promise<{
-      tutorials: { id: string; title: string; description: string; fileName: string; videoUrl: string; downloaded: boolean }[];
+      tutorials: { id: string; title: string; description: string; fileName: string; videoUrl: string; downloaded: boolean; sortOrder: number | null }[];
       offline: boolean;
     }>;
     download: (tutorial: { id: string; title: string; description: string; fileName: string; videoUrl: string }) => Promise<{

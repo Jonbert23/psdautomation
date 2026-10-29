@@ -1004,6 +1004,14 @@ tr.reorder-target {
    CHECK INLINE
    ============================================================ */
 
+.check-list {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+
 .check-inline {
   display: flex;
   align-items: center;

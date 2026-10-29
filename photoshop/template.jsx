@@ -104,10 +104,14 @@ function generateTemplate(job) {
             var textLayer = set.artLayers.add();
             textLayer.kind = LayerKind.TEXT;
             textLayer.name = textSpec.name;
+            var size = textSpec.size > 0 ? textSpec.size : 300;
+            var x = typeof textSpec.x === "number" ? textSpec.x : groupSpec.x + groupSpec.width / 2;
+            var y = typeof textSpec.y === "number" ? textSpec.y : groupSpec.y + groupSpec.height / 2;
             textLayer.textItem.contents = String(textSpec.contents);
-            textLayer.textItem.size = 24;
+            textLayer.textItem.size = size;
+            textLayer.textItem.justification = Justification.CENTER;
             textLayer.textItem.color = solidColor(255, 255, 255);
-            textLayer.textItem.position = [groupSpec.x + 16, groupSpec.y + 36 + t * 32];
+            textLayer.textItem.position = [x, y];
         }
     }
 

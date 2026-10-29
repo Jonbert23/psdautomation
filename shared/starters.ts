@@ -65,7 +65,7 @@ export function starterFields(startOrder = 0, parts: GarmentPart[] = []): Attrib
     textField(startOrder, {
       key: "name",
       displayName: "Name",
-      placeholder: "Player name",
+      placeholder: "PNAME",
       required: true,
       layerName: "surname",
       partId: primary?.id,

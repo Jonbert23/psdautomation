@@ -1,3 +1,4 @@
+import { profileCategoryIds } from "@shared/defaults";
 import type { Category, GarmentProfile } from "@shared/types";
 
 export function IdentityStep({
@@ -9,6 +10,17 @@ export function IdentityStep({
   categories: Category[];
   onChange: (patch: Partial<GarmentProfile>) => void;
 }) {
+  const selected = profileCategoryIds(profile);
+
+  const toggle = (id: string, checked: boolean) => {
+    const next = checked ? [...selected, id] : selected.filter((item) => item !== id);
+    const unique = [...new Set(next)];
+    if (!unique.length) return;
+    const ordered = categories.map((category) => category.id).filter((item) => unique.includes(item));
+    const ids = [...ordered, ...unique.filter((item) => !ordered.includes(item))];
+    onChange({ categoryIds: ids, categoryId: ids[0] });
+  };
+
   return (
     <>
       <p className="page-lead">
@@ -18,7 +30,7 @@ export function IdentityStep({
       <section className="card">
         <h3>Identity</h3>
         <div className="card-body form-grid">
-          <div className="field">
+          <div className="field span-2">
             <label>Garment name</label>
             <input
               className="input"
@@ -27,15 +39,20 @@ export function IdentityStep({
               onChange={(e) => onChange({ name: e.target.value })}
             />
           </div>
-          <div className="field">
-            <label>Category</label>
-            <select className="select" value={profile.categoryId} onChange={(e) => onChange({ categoryId: e.target.value })}>
+          <div className="field span-2">
+            <label>Categories</label>
+            <div className="check-list">
               {categories.map((c) => (
-                <option key={c.id} value={c.id}>
+                <label key={c.id} className="check-inline">
+                  <input
+                    type="checkbox"
+                    checked={selected.includes(c.id)}
+                    onChange={(e) => toggle(c.id, e.target.checked)}
+                  />
                   {c.name}
-                </option>
+                </label>
               ))}
-            </select>
+            </div>
           </div>
           <div className="field span-2">
             <label>Description (optional)</label>

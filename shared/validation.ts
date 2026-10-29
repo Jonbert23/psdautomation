@@ -1,3 +1,4 @@
+import { profileCategoryIds } from "./defaults";
 import { extractTokens } from "./naming";
 import { resolvePresets } from "./presets";
 import type {
@@ -26,7 +27,7 @@ export function validateSchemaVersion(version: unknown): ValidationResult {
 export function validateProfile(profile: GarmentProfile): ValidationResult {
   const issues: ValidationIssue[] = [];
   if (!profile.name.trim()) issues.push(issue("name", "required", "Garment name is required."));
-  if (!profile.categoryId) issues.push(issue("categoryId", "required", "Category is required."));
+  if (!profileCategoryIds(profile).length) issues.push(issue("categoryId", "required", "Category is required."));
 
   const partIds = new Set<string>();
   for (const part of profile.parts) {

@@ -134,7 +134,10 @@ export interface ExportSettings {
 export interface GarmentProfile {
   id: string;
   name: string;
+  /** First selected category. Layouts saved before categoryIds still use this alone. */
   categoryId: string;
+  /** Every category this layout belongs to. Empty means use categoryId. */
+  categoryIds?: string[];
   description: string;
   previewImage: string;
   templatePath: string;
@@ -243,6 +246,7 @@ export interface PublicCatalogProfile {
   name: string;
   description: string;
   categoryName: string;
+  categoryNames?: string[];
   ownerEmail: string;
   updatedAt: string;
   status: ProfileStatus;

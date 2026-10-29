@@ -11,10 +11,14 @@ export const DEFAULT_PLACEHOLDER_WIDTH = 400;
 export const DEFAULT_PLACEHOLDER_HEIGHT = 500;
 export const PLACEHOLDER_FILLS = ["#3d6b99", "#8a5a12", "#1f5c3a", "#6b3d6b", "#5c3a1f", "#2e4a6b"];
 export const TEXT_FIELD_TYPES = new Set(["text", "number", "select", "color"]);
+export const TEMPLATE_FONT_SIZE = 300;
 
 export interface TemplateTextLayer {
   name: string;
   contents: string;
+  size: number;
+  x: number;
+  y: number;
 }
 
 export interface TemplateFill {
@@ -67,12 +71,30 @@ export function hexToRgb(hex: string): TemplateFill {
   };
 }
 
+function placeTexts(
+  texts: { name: string; contents: string }[],
+  box: { x: number; y: number; width: number; height: number },
+): TemplateTextLayer[] {
+  const size = TEMPLATE_FONT_SIZE;
+  const leading = size * 1.2;
+  const centerX = box.x + box.width / 2;
+  const centerY = box.y + box.height / 2;
+  const firstBaseline = centerY + size * 0.35 - ((texts.length - 1) * leading) / 2;
+  return texts.map((text, index) => ({
+    name: text.name,
+    contents: text.contents,
+    size,
+    x: centerX,
+    y: firstBaseline + index * leading,
+  }));
+}
+
 function textContents(attr: AttributeDefinition): string {
-  if (attr.defaultValue !== null && attr.defaultValue !== undefined && String(attr.defaultValue).trim() !== "") {
-    return String(attr.defaultValue);
-  }
-  if (attr.placeholder.trim()) return attr.placeholder;
-  return attr.displayName.trim() || attr.key || "Text";
+  const value =
+    attr.defaultValue !== null && attr.defaultValue !== undefined && String(attr.defaultValue).trim() !== ""
+      ? String(attr.defaultValue)
+      : attr.placeholder.trim() || attr.displayName.trim() || attr.key || "Text";
+  return value.trim().toLowerCase() === "player name" ? "PNAME" : value;
 }
 
 export function buildTemplateSpec(profile: GarmentProfile, sizes: PartPixelSize[] = []): TemplateSpec {
@@ -132,7 +154,7 @@ export function buildTemplateSpec(profile: GarmentProfile, sizes: PartPixelSize[
       width: box.width,
       height: box.height,
       fill: hexToRgb(PLACEHOLDER_FILLS[index % PLACEHOLDER_FILLS.length]),
-      texts,
+      texts: placeTexts(texts, box),
     });
   }
 

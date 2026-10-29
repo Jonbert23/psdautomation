@@ -1,3 +1,4 @@
+import { profileCategoryIds } from "./defaults";
 import { profileReadyForAutomation, validateProfile } from "./validation";
 import { resolvePresets } from "./presets";
 import type { GarmentProfile } from "./types";
@@ -8,7 +9,7 @@ export const PROFILE_STEPS = [
   { id: "sizes", label: "Sizes" },
   { id: "presets", label: "Presets" },
   { id: "layout", label: "Layout" },
-  { id: "fields", label: "Fields" },
+  { id: "fields", label: "Custom" },
   { id: "export", label: "Conflicts" },
 ] as const;
 
@@ -17,7 +18,7 @@ export type ProfileStepId = (typeof PROFILE_STEPS)[number]["id"];
 export type StepState = "empty" | "progress" | "ready";
 
 export function stepStates(profile: GarmentProfile): Record<ProfileStepId, StepState> {
-  const identityReady = profile.name.trim() !== "" && profile.categoryId.trim() !== "";
+  const identityReady = profile.name.trim() !== "" && profileCategoryIds(profile).length > 0;
   const enabledParts = profile.parts.filter((p) => p.enabled);
   const requiredParts = enabledParts.filter((p) => p.required);
   const partsMapped = enabledParts.length > 0 && enabledParts.every((p) => p.photoshopLayer.trim() !== "");
@@ -74,14 +75,15 @@ export function profileReuseReady(profile: GarmentProfile): boolean {
   return profileReadyForAutomation(profile).ok;
 }
 
-/** Template Guide is enabled only when parts, sizes, presets, layout, and fields are all ready. */
+/** Template Guide needs parts, sizes, presets, and layout. Custom details are optional. */
 export function templateGuideReady(profile: GarmentProfile): boolean {
   const states = stepStates(profile);
+  const customOk = profile.attributes.length === 0 || states.fields === "ready";
   return (
     states.parts === "ready" &&
     states.sizes === "ready" &&
     states.presets === "ready" &&
     states.layout === "ready" &&
-    states.fields === "ready"
+    customOk
   );
 }

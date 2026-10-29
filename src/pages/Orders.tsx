@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Trash2 } from "lucide-react";
+import { profileCategoryIds } from "@shared/defaults";
 import type { Category, GarmentProfile, ProductionOrder } from "@shared/types";
 import { FilterTabs } from "../components/FilterTabs";
 import { FolderCard, FolderGrid } from "../components/FolderCard";
@@ -31,7 +32,10 @@ export function OrdersPage() {
   const filtered = useMemo(() => {
     const needle = query.toLowerCase();
     return orders.filter((o) => {
-      if (category !== "all" && profiles.find((p) => p.id === o.profileId)?.categoryId !== category) return false;
+      if (category !== "all") {
+        const profile = profiles.find((p) => p.id === o.profileId);
+        if (!profile || !profileCategoryIds(profile).includes(category)) return false;
+      }
       const hay = `${o.name} ${profileName(o.profileId)} ${o.status}`.toLowerCase();
       return hay.includes(needle);
     });
