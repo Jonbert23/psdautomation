@@ -13,6 +13,7 @@ export function DashboardPage() {
   const [error, setError] = useState("");
   const [online, setOnline] = useState(() => navigator.onLine);
   const [catalog, setCatalog] = useState<PublicCatalogProfile[]>([]);
+  const [catalogLoading, setCatalogLoading] = useState(() => navigator.onLine);
   const [catalogError, setCatalogError] = useState("");
   const [notice, setNotice] = useState("");
   const [busyId, setBusyId] = useState("");
@@ -32,9 +33,11 @@ export function DashboardPage() {
       if (!navigator.onLine) {
         setOnline(false);
         setCatalog([]);
+        setCatalogLoading(false);
         return;
       }
       setOnline(true);
+      setCatalogLoading(true);
       try {
         const profiles = await api().catalog.list();
         if (!active || !navigator.onLine) return;
@@ -42,12 +45,15 @@ export function DashboardPage() {
       } catch {
         if (!active) return;
         setCatalog([]);
+      } finally {
+        if (active) setCatalogLoading(false);
       }
     }
 
     function goOffline() {
       setOnline(false);
       setCatalog([]);
+      setCatalogLoading(false);
     }
 
     void loadCatalog();
@@ -83,7 +89,6 @@ export function DashboardPage() {
     if (catalogCategory === "all") return catalog;
     return catalog.filter((profile) => catalogNames(profile).includes(catalogCategory));
   }, [catalog, catalogCategory]);
-  const showCatalog = online && catalog.length > 0;
 
   if (error) return <div className="error-banner">{error}</div>;
   if (!data) return <p className="muted">Loading workspace…</p>;
@@ -112,7 +117,8 @@ export function DashboardPage() {
           <span className="shape small" />
         </div>
       </section>
-      {showCatalog ? (
+      {online && catalogLoading ? <PublicProfilesSkeleton /> : null}
+      {online && !catalogLoading && catalog.length > 0 ? (
         <section className="public-profiles">
           <h3>Public profiles</h3>
           {catalogError ? <div className="error-banner">{catalogError}</div> : null}
@@ -145,6 +151,33 @@ export function DashboardPage() {
         </section>
       ) : null}
     </>
+  );
+}
+
+function PublicProfilesSkeleton() {
+  const tabs = [52, 128, 96, 148, 112];
+  return (
+    <section className="public-profiles" aria-busy="true" aria-label="Loading public profiles">
+      <h3>Public profiles</h3>
+      <div className="filter-tabs" aria-hidden="true">
+        {tabs.map((width, index) => (
+          <span key={index} className="skeleton-tab" style={{ width }} />
+        ))}
+      </div>
+      <FolderGrid>
+        {Array.from({ length: 8 }, (_, index) => (
+          <article key={index} className="folder-card" aria-hidden="true">
+            <div className="folder-silhouette">
+              <div className="folder-face skeleton-folder">
+                <span className="skeleton-line title" />
+                <span className="skeleton-line detail" />
+                <span className="skeleton-line action" />
+              </div>
+            </div>
+          </article>
+        ))}
+      </FolderGrid>
+    </section>
   );
 }
 

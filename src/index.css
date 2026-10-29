@@ -728,6 +728,59 @@ tr.reorder-target {
   letter-spacing: -0.01em;
 }
 
+.skeleton-tab,
+.skeleton-line {
+  display: block;
+  background: #e4e4e0;
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+.skeleton-tab {
+  flex: none;
+  height: 32px;
+  border-radius: var(--r-md);
+}
+
+.skeleton-folder {
+  pointer-events: none;
+}
+
+.skeleton-line.title {
+  width: 72%;
+  height: 14px;
+  margin-top: 2px;
+}
+
+.skeleton-line.detail {
+  width: 90%;
+  height: 11px;
+}
+
+.skeleton-line.action {
+  width: 84px;
+  height: 28px;
+  margin-top: auto;
+  margin-left: auto;
+  border-radius: var(--r-md);
+}
+
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-tab,
+  .skeleton-line {
+    animation: none;
+  }
+}
+
 .attention-list {
   margin: 0;
   padding: 0;
