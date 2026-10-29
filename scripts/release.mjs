@@ -12,16 +12,56 @@ if (!process.env.GH_TOKEN && !process.env.GITHUB_TOKEN) {
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const pkgPath = path.join(root, "package.json");
 
+function git(args) {
+  const result = spawnSync("git", args, { cwd: root, encoding: "utf8" });
+  if (result.status !== 0) {
+    if (result.stdout) process.stdout.write(result.stdout);
+    if (result.stderr) process.stderr.write(result.stderr);
+    process.exit(result.status ?? 1);
+  }
+  return result.stdout;
+}
+
+function readPackage() {
+  return JSON.parse(fs.readFileSync(pkgPath, "utf8"));
+}
+
+function committedVersion() {
+  const result = spawnSync("git", ["show", "HEAD:package.json"], { cwd: root, encoding: "utf8" });
+  if (result.status !== 0) return null;
+  return JSON.parse(result.stdout).version;
+}
+
 if (!draft) {
-  const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
-  const parts = String(pkg.version)
-    .split(".")
-    .map((part) => Number.parseInt(part, 10) || 0);
-  while (parts.length < 3) parts.push(0);
-  parts[2] += 1;
-  pkg.version = parts.slice(0, 3).join(".");
-  fs.writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`);
+  let pkg = readPackage();
+  if (pkg.version === committedVersion()) {
+    const parts = String(pkg.version)
+      .split(".")
+      .map((part) => Number.parseInt(part, 10) || 0);
+    while (parts.length < 3) parts.push(0);
+    parts[2] += 1;
+    pkg.version = parts.slice(0, 3).join(".");
+    fs.writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`);
+  }
   console.log(`Publishing stable release ${pkg.version}`);
+
+  // electron-builder 26 publishes immediately. GitHub rejects that with
+  // "Published releases must have a valid tag" unless the tag already exists.
+  const tag = `v${pkg.version}`;
+  const localTag = spawnSync("git", ["rev-parse", "--verify", "--quiet", `refs/tags/${tag}`], { cwd: root, encoding: "utf8" });
+  if (localTag.status !== 0) {
+    console.log(`Creating git tag ${tag}`);
+    git(["tag", tag]);
+  }
+  const remoteTag = spawnSync("git", ["ls-remote", "--tags", "origin", `refs/tags/${tag}`], { cwd: root, encoding: "utf8" });
+  if (remoteTag.status !== 0) {
+    if (remoteTag.stderr) process.stderr.write(remoteTag.stderr);
+    process.exit(remoteTag.status ?? 1);
+  }
+  if (!remoteTag.stdout.includes(`refs/tags/${tag}`)) {
+    console.log(`Pushing git tag ${tag}`);
+    git(["push", "origin", `refs/tags/${tag}`]);
+  }
 } else {
   console.log("Publishing a draft release. Installed apps will not offer this update.");
 }

@@ -1,6 +1,6 @@
 {
   "name": "garment-customizer",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Dynamic garment layout customizer and Photoshop automation",
   "main": "dist-electron/main.js",
   "author": "Garment Customizer",
